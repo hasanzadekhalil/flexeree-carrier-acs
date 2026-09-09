@@ -73,7 +73,7 @@ Enterprise & Carrier-Grade TR-069 Auto Configuration Server (ACS) and ISP Manage
 
 ### 2. Clone & Install Dependencies
 ```bash
-git clone https://github.com/your-username/flexeree-carrier-acs.git
+git clone https://github.com/hasanzadekhalil/flexeree-carrier-acs.git
 cd flexeree-carrier-acs
 npm install
 ```
