@@ -1,0 +1,33 @@
+{
+  "name": "flexeree-carrier-acs",
+  "version": "1.0.0",
+  "description": "Carrier-Grade TR-069 ACS & ISP Management Command Center for GPON ONTs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test:deep": "python tests/deep_test.py",
+    "test:carrier": "python tests/extended_carrier_test.py"
+  },
+  "keywords": [
+    "tr-069",
+    "cwmp",
+    "genieacs",
+    "isp",
+    "gpon",
+    "ont",
+    "syrotech",
+    "noc",
+    "carrier-grade"
+  ],
+  "author": "Flexeree ISP",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.5.0",
+    "multer": "^1.4.5-lts.1"
+  }
+}

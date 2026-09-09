@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flexeree Carrier ACS — NOC Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+  <style>
+    :root {
+      --bg-base: #06090e;
+      --bg-surface: #0c141f;
+      --bg-surface-raised: #121e2e;
+      --bg-surface-overlay: #17263b;
+      --border-subtle: #1c2e47;
+      --border-strong: #273f60;
+      --border-active: #395c8c;
+      --text-primary: #f0f6fc;
+      --text-secondary: #a2b4ce;
+      --text-muted: #798ea8;
+      --text-dim: #506177;
+      --cyan-500: #00d2ff;
+      --cyan-400: #38e1ff;
+      --cyan-dim: rgba(0, 210, 255, 0.12);
+      --emerald-500: #10b981;
+      --emerald-dim: rgba(16, 185, 129, 0.12);
+      --rose-500: #f43f5e;
+      --rose-dim: rgba(244, 63, 94, 0.12);
+      --amber-500: #f59e0b;
+      --amber-dim: rgba(245, 158, 11, 0.12);
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection {
+      background: rgba(0, 210, 255, 0.3);
+      color: #ffffff;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-active); }
+
+    .top-header {
+      height: 56px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-emblem {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #0284c7 0%, #004e8c 100%);
+      border: 1px solid rgba(0, 210, 255, 0.4);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 18px;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--cyan-dim);
+      border: 1px solid rgba(0, 210, 255, 0.3);
+      color: var(--cyan-400);
+      letter-spacing: 0.05em;
+    }
+
+    .header-center-telemetry {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .telemetry-node {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald-500);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .header-user-ops {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-profile {
+      text-align: right;
+    }
+
+    .user-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .user-role-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--cyan-400);
+    }
+
+    .app-viewport {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 220px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px 10px;
+      flex-shrink: 0;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      text-align: left;
+      width: 100%;
+    }
+
+    .nav-item i {
+      font-size: 16px;
+      color: var(--text-muted);
+      transition: color 0.15s ease;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-surface-raised);
+      color: var(--text-primary);
+    }
+
+    .nav-item:hover i {
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--bg-surface-overlay);
+      border-color: var(--border-strong);
+      color: var(--cyan-400);
+    }
+
+    .nav-item.active i {
+      color: var(--cyan-400);
+    }
+
+    .sidebar-infra {
+      padding: 12px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .infra-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .infra-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .infra-port {
+      color: var(--cyan-400);
+      font-weight: 600;
+    }
+
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 28px;
+      background: var(--bg-base);
+    }
+
+    .metric-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .metric-cell {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 16px;
+      position: relative;
+      transition: border-color 0.2s ease;
+    }
+
+    .metric-cell:hover {
+      border-color: var(--border-strong);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 8px 0 2px 0;
+      line-height: 1;
+    }
+
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .text-emerald { color: var(--emerald-500) !important; }
+    .text-rose { color: var(--rose-500) !important; }
+    .text-cyan { color: var(--cyan-400) !important; }
+
+    .command-banner {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 16px;
+    }
+
+    .banner-title {
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    .banner-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .code-chip {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-strong);
+      padding: 6px 12px;
+      border-radius: 4px;
+      color: var(--cyan-400);
+      user-select: all;
+    }
+
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface-raised);
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title i {
+      color: var(--cyan-400);
+      font-size: 16px;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    .carrier-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .carrier-table th {
+      background: var(--bg-surface-raised);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+
+    .carrier-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    .carrier-table tr:hover td {
+      background: var(--bg-surface-raised);
+      color: var(--text-primary);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-badge.online {
+      background: var(--emerald-dim);
+      color: var(--emerald-500);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.offline {
+      background: rgba(86, 104, 130, 0.12);
+      color: var(--text-muted);
+      border: 1px solid rgba(86, 104, 130, 0.3);
+    }
+
+    .status-indicator-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .online .status-indicator-dot { background: var(--emerald-500); }
+    .offline .status-indicator-dot { background: var(--text-muted); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      font-family: var(--font-sans);
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 11px;
+    }
+
+    .btn-primary {
+      background: #0369a1;
+      color: #ffffff;
+      border-color: #0369a1;
+    }
+
+    .btn-primary:hover {
+      background: #075985;
+      border-color: #075985;
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-raised);
+      border-color: var(--border-strong);
+      color: var(--text-secondary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-surface-overlay);
+      color: var(--text-primary);
+      border-color: var(--border-active);
+    }
+
+    .btn-warning {
+      background: var(--amber-dim);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: var(--amber-500);
+    }
+
+    .btn-warning:hover {
+      background: rgba(245, 158, 11, 0.25);
+    }
+
+    .btn-danger {
+      background: var(--rose-dim);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: var(--rose-500);
+    }
+
+    .btn-danger:hover {
+      background: rgba(244, 63, 94, 0.25);
+    }
+
+    .optical-gauge-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .gauge-track {
+      height: 8px;
+      background: var(--bg-base);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 10px 0 6px 0;
+      position: relative;
+    }
+
+    .gauge-bar {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .gauge-bar.good { background: var(--emerald-500); }
+    .gauge-bar.warn { background: var(--amber-500); }
+    .gauge-bar.bad { background: var(--rose-500); }
+
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(6, 9, 14, 0.85);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-frame {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 780px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+
+    .modal-top {
+      padding: 16px 20px;
+      background: var(--bg-surface-raised);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-tabs {
+      display: flex;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 16px;
+      gap: 6px;
+    }
+
+    .tab-btn {
+      padding: 10px 14px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      color: var(--cyan-400);
+      border-bottom-color: var(--cyan-400);
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-family: inherit;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--cyan-500);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .action-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+
+    .search-input-group {
+      position: relative;
+      flex: 1;
+      max-width: 380px;
+    }
+
+    .search-input-group i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    .search-input-group input {
+      padding-left: 34px;
+    }
+
+    .hidden { display: none !important; }
+
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+
+    .tag-pill .remove-tag-btn {
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .tag-pill .remove-tag-btn:hover {
+      color: var(--rose-500);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-header">
+    <div class="brand-group">
+      <div class="brand-emblem">
+        <i class="ph-bold ph-broadcast"></i>
+      </div>
+      <div>
+        <div class="brand-title">
+          <span>Flexeree ACS</span>
+          <span class="brand-badge">NOC PRO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-center-telemetry">
+      <div class="telemetry-node">
+        <div class="pulse-dot"></div>
+        <span>TR-069 CWMP :7547</span>
+      </div>
+      <div class="telemetry-node">
+        <span style="color: var(--border-strong);">|</span>
+        <span>GENIEACS NBI :7557</span>
+      </div>
+      <div class="telemetry-node">
+        <span style="color: var(--border-strong);">|</span>
+        <span>FS :7567</span>
+      </div>
+    </div>
+
+    <div id="userHeaderControls" class="header-user-ops hidden">
+      <div class="user-profile">
+        <div id="userFullName" class="user-name">Admin</div>
+        <div id="userRoleBadge" class="user-role-tag">Super Admin</div>
+      </div>
+      <button onclick="logout()" class="btn btn-secondary btn-sm">
+        <i class="ph-bold ph-sign-out"></i> Logout
+      </button>
+    </div>
+  </header>
+
+  <div class="app-viewport">
+
+    <aside id="mainSidebar" class="sidebar hidden">
+      <div class="nav-list">
+        <button onclick="navigate('dashboard')" id="nav-dashboard" class="nav-item active">
+          <i class="ph-bold ph-chart-pie"></i> Overview
+        </button>
+        <button onclick="navigate('devices')" id="nav-devices" class="nav-item">
+          <i class="ph-bold ph-hard-drives"></i> ONT Devices
+        </button>
+        <button onclick="navigate('presets')" id="nav-presets" class="nav-item">
+          <i class="ph-bold ph-magic-wand"></i> ZTP Presets
+        </button>
+        <button onclick="navigate('audit')" id="nav-audit" class="nav-item">
+          <i class="ph-bold ph-scroll"></i> Audit Logs
+        </button>
+        <button onclick="navigate('users')" id="nav-users" class="nav-item">
+          <i class="ph-bold ph-users-three"></i> Staff & RBAC
+        </button>
+      </div>
+
+      <div class="sidebar-infra">
+        <div class="infra-title">Core Endpoints</div>
+        <div class="infra-row"><span>TR-069</span><span class="infra-port">:7547</span></div>
+        <div class="infra-row"><span>GenieACS NBI</span><span class="infra-port">:7557</span></div>
+        <div class="infra-row"><span>Firmware FS</span><span class="infra-port">:7567</span></div>
+        <div class="infra-row"><span>Portal API</span><span class="infra-port">:4000</span></div>
+      </div>
+    </aside>
+
+    <main class="content-area">
+
+      <section id="view-login" style="max-width: 380px; margin: 80px auto;">
+        <div class="panel">
+          <div class="panel-header" style="justify-content: center; flex-direction: column; text-align: center; gap: 8px;">
+            <div class="brand-emblem" style="width: 44px; height: 44px; font-size: 24px;">
+              <i class="ph-bold ph-shield-check"></i>
+            </div>
+            <div class="panel-title" style="font-size: 15px;">NOC Operator Authentication</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Carrier credentials required for system access</div>
+          </div>
+          <div class="modal-body">
+            <div id="loginError" class="hidden" style="margin-bottom: 12px; padding: 8px 12px; border-radius: 4px; background: var(--rose-dim); border: 1px solid rgba(244, 63, 94, 0.3); color: var(--rose-500); font-size: 11px;"></div>
+            <form onsubmit="handleLogin(event)">
+              <div class="form-group">
+                <label class="form-label">Operator Username</label>
+                <input type="text" id="loginUsername" required class="form-control" placeholder="admin" autofocus>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="loginPassword" required class="form-control" placeholder="••••••••">
+              </div>
+              <button type="submit" class="btn btn-primary" style="width: 100%; padding: 10px; margin-top: 8px;">
+                Authenticate Session <i class="ph-bold ph-arrow-right"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-dashboard" class="hidden">
+        <div class="metric-strip">
+          <div class="metric-cell">
+            <div class="metric-header">
+              <span>Total Managed ONTs</span>
+              <i class="ph-bold ph-hard-drives"></i>
+            </div>
+            <div id="statTotal" class="metric-value">0</div>
+            <div class="metric-sub">Syrotech GPON + Multi-vendor</div>
+          </div>
+
+          <div class="metric-cell">
+            <div class="metric-header">
+              <span>Online Subscribers</span>
+              <i class="ph-bold ph-wifi-high text-emerald"></i>
+            </div>
+            <div id="statOnline" class="metric-value text-emerald">0</div>
+            <div class="metric-sub">Active Inform within 10 min</div>
+          </div>
+
+          <div class="metric-cell">
+            <div class="metric-header">
+              <span>Offline / Warning</span>
+              <i class="ph-bold ph-warning-circle text-rose"></i>
+            </div>
+            <div id="statOffline" class="metric-value text-rose">0</div>
+            <div class="metric-sub">No recent session packets</div>
+          </div>
+
+          <div class="metric-cell">
+            <div class="metric-header">
+              <span>Engine Status</span>
+              <i class="ph-bold ph-cpu text-cyan"></i>
+            </div>
+            <div class="metric-value text-cyan">100% OK</div>
+            <div class="metric-sub">All CWMP services active</div>
+          </div>
+        </div>
+
+        <div class="command-banner">
+          <div>
+            <div class="banner-title">Carrier TR-069 ACS Provisioning URL</div>
+            <div class="banner-desc">Configure in OLT profile or point customer ONT CWMP client directly:</div>
+          </div>
+          <div class="code-chip">http://103.124.208.56:7547/</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <i class="ph-bold ph-clock-counter-clockwise"></i> Real-time NOC Operations Stream
+            </div>
+            <button onclick="loadDashboard()" class="btn btn-secondary btn-sm">
+              <i class="ph-bold ph-arrows-clockwise"></i> Refresh
+            </button>
+          </div>
+          <div class="table-wrapper">
+            <table class="carrier-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                  <th>Operator</th>
+                  <th>Target Device</th>
+                  <th>Operation Details</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardEventsList">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading operations log...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-devices" class="hidden">
+        <div class="action-toolbar">
+          <div class="search-input-group">
+            <i class="ph-bold ph-magnifying-glass"></i>
+            <input type="text" id="deviceSearchInput" onkeyup="filterDevices()" class="form-control" placeholder="Search serial, IP, customer, OLT, tag...">
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button onclick="loadDevices()" class="btn btn-secondary btn-sm">
+              <i class="ph-bold ph-arrows-clockwise"></i> Refresh Devices
+            </button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="table-wrapper">
+            <table class="carrier-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Serial Number / ID</th>
+                  <th>Model & Vendor</th>
+                  <th>WAN IP / PPPoE</th>
+                  <th>Optical Power (RX / TX)</th>
+                  <th>Grouping Tags</th>
+                  <th>Last Inform</th>
+                  <th style="text-align: right;">Manage</th>
+                </tr>
+              </thead>
+              <tbody id="devicesTableBody">
+                <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Loading ONT inventory...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-presets" class="hidden">
+        <div class="action-toolbar">
+          <div>
+            <div style="font-size: 15px; font-weight: 700;">Zero-Touch Provisioning (ZTP) Presets</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Automated configuration rules triggered on ONT bootstrap & boot events</div>
+          </div>
+          <button onclick="openNewPresetModal()" class="btn btn-primary btn-sm">
+            <i class="ph-bold ph-plus"></i> New Preset
+          </button>
+        </div>
+        <div id="presetsList" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        </div>
+      </section>
+
+      <section id="view-audit" class="hidden">
+        <div class="action-toolbar">
+          <div>
+            <div style="font-size: 15px; font-weight: 700;">Immutable Audit Trail</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Cryptographically logged operator interventions and device dispatches</div>
+          </div>
+          <button onclick="loadAudit()" class="btn btn-secondary btn-sm">
+            <i class="ph-bold ph-arrows-clockwise"></i> Refresh Audit
+          </button>
+        </div>
+        <div class="panel">
+          <div class="table-wrapper">
+            <table class="carrier-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Operator</th>
+                  <th>Role</th>
+                  <th>Action</th>
+                  <th>Target ONT</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="auditTableBody">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading audit records...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-users" class="hidden">
+        <div class="action-toolbar">
+          <div>
+            <div style="font-size: 15px; font-weight: 700;">NOC Access Management (RBAC)</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Manage administrator, technician, and operator permissions</div>
+          </div>
+          <button onclick="openNewUserModal()" class="btn btn-primary btn-sm">
+            <i class="ph-bold ph-user-plus"></i> Create Staff Account
+          </button>
+        </div>
+        <div class="panel">
+          <div class="table-wrapper">
+            <table class="carrier-table">
+              <thead>
+                <tr>
+                  <th>Full Name</th>
+                  <th>Username</th>
+                  <th>Assigned Role</th>
+                  <th>Created Date</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Loading staff accounts...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div id="deviceModal" class="modal-backdrop hidden">
+    <div class="modal-frame">
+      <div class="modal-top">
+        <div>
+          <div id="modalDeviceTitle" style="font-size: 14px; font-weight: 700; color: var(--text-primary);">ONT Device Details</div>
+          <div id="modalDeviceSubtitle" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);"></div>
+        </div>
+        <button onclick="closeDeviceModal()" class="btn btn-secondary btn-sm" style="padding: 4px 8px;">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="modal-tabs">
+        <button onclick="switchTab('overview')" id="tabBtn-overview" class="tab-btn active">Overview & Optics</button>
+        <button onclick="switchTab('wan')" id="tabBtn-wan" class="tab-btn">WAN / PPPoE / VLAN</button>
+        <button onclick="switchTab('wifi')" id="tabBtn-wifi" class="tab-btn">Wi-Fi (2.4G / 5G)</button>
+        <button onclick="switchTab('actions')" id="tabBtn-actions" class="tab-btn">Remote Actions</button>
+        <button onclick="switchTab('diag')" id="tabBtn-diag" class="tab-btn">Diagnostics</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="tabContent-overview" style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="optical-gauge-container">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); font-weight: 600;">
+                <span>OPTICAL RX POWER</span>
+                <span>Threshold: -8 to -27 dBm</span>
+              </div>
+              <div id="modalRxPower" style="font-family: var(--font-mono); font-size: 24px; font-weight: 700; color: var(--emerald-500); margin: 6px 0;">-19.5 dBm</div>
+              <div class="gauge-track">
+                <div id="modalRxBar" class="gauge-bar good" style="width: 70%;"></div>
+              </div>
+              <div id="modalRxStatus" style="font-size: 11px; color: var(--emerald-500); font-weight: 600;">Normal Optical Signal</div>
+            </div>
+
+            <div class="optical-gauge-container">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); font-weight: 600;">
+                <span>OPTICAL TX POWER</span>
+                <span>Threshold: +0.5 to +5 dBm</span>
+              </div>
+              <div id="modalTxPower" style="font-family: var(--font-mono); font-size: 24px; font-weight: 700; color: var(--cyan-400); margin: 6px 0;">+2.3 dBm</div>
+              <div class="gauge-track">
+                <div id="modalTxBar" class="gauge-bar good" style="width: 60%;"></div>
+              </div>
+              <div id="modalTxStatus" style="font-size: 11px; color: var(--cyan-400); font-weight: 600;">Normal Transmit Power</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom: 0;">
+            <div class="form-grid" style="padding: 14px 18px; font-size: 11px;">
+              <div><span style="color: var(--text-muted);">Manufacturer:</span> <span id="modalManufacturer" style="font-weight: 600; color: var(--text-primary);">Syrotech</span></div>
+              <div><span style="color: var(--text-muted);">Product Class:</span> <span id="modalProductClass" style="font-weight: 600; color: var(--text-primary);">SY-GPON-1110-WDONT</span></div>
+              <div><span style="color: var(--text-muted);">Serial Number:</span> <span id="modalSerial" style="font-family: var(--font-mono); color: var(--text-primary);"></span></div>
+              <div><span style="color: var(--text-muted);">Hardware Ver:</span> <span id="modalHwVer" style="color: var(--text-primary);"></span></div>
+              <div><span style="color: var(--text-muted);">Software Ver:</span> <span id="modalSwVer" style="color: var(--text-primary);"></span></div>
+              <div><span style="color: var(--text-muted);">Last Inform:</span> <span id="modalLastInform" style="color: var(--text-primary);"></span></div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-bottom: 0; padding: 14px 18px;">
+            <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Device Grouping Tags</div>
+            <div id="modalTagsList" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;"></div>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="newTagInput" class="form-control" style="flex: 1;" placeholder="Add tag (e.g. Area-Central, OLT-01, VIP-Customer)...">
+              <button onclick="addDeviceTag()" class="btn btn-primary btn-sm">Attach Tag</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabContent-wan" class="hidden">
+          <div class="panel" style="margin-bottom: 0; padding: 16px;">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Connection Protocol</label>
+                <select id="wanConnType" class="form-control">
+                  <option value="PPPoE">PPPoE (Recommended)</option>
+                  <option value="DHCP">DHCP / IPoE</option>
+                  <option value="Static">Static IP</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">802.1Q VLAN ID</label>
+                <input type="number" id="wanVlanId" class="form-control" placeholder="100">
+              </div>
+              <div class="form-group">
+                <label class="form-label">PPPoE Username</label>
+                <input type="text" id="wanPppoeUser" class="form-control" placeholder="user@flexeree">
+              </div>
+              <div class="form-group">
+                <label class="form-label">PPPoE Password</label>
+                <input type="password" id="wanPppoePass" class="form-control" placeholder="••••••••">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Primary DNS</label>
+                <input type="text" id="wanDns1" value="1.1.1.1" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Secondary DNS</label>
+                <input type="text" id="wanDns2" value="8.8.8.8" class="form-control">
+              </div>
+            </div>
+            <button onclick="saveWanConfig()" class="btn btn-primary" style="margin-top: 10px;">
+              <i class="ph-bold ph-paper-plane-tilt"></i> Push WAN Configuration to ONT
+            </button>
+          </div>
+        </div>
+
+        <div id="tabContent-wifi" class="hidden" style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="panel" style="margin-bottom: 0; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div style="font-weight: 700; color: var(--cyan-400); font-size: 12px;"><i class="ph-bold ph-wifi-high"></i> 2.4 GHz Primary Radio</div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 11px;">
+                <input type="checkbox" id="wifi24Enabled" checked> Enabled
+              </label>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">SSID Name</label>
+                <input type="text" id="wifi24Ssid" class="form-control" placeholder="Flexeree_WiFi">
+              </div>
+              <div class="form-group">
+                <label class="form-label">WPA2/WPA3 Passphrase</label>
+                <input type="text" id="wifi24Pass" class="form-control" placeholder="Wi-Fi Password">
+              </div>
+            </div>
+            <button onclick="saveWifiConfig('1')" class="btn btn-primary btn-sm">Push 2.4G Configuration</button>
+          </div>
+
+          <div class="panel" style="margin-bottom: 0; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <div style="font-weight: 700; color: var(--emerald-500); font-size: 12px;"><i class="ph-bold ph-wifi-high"></i> 5 GHz High-Speed Radio</div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 11px;">
+                <input type="checkbox" id="wifi5Enabled" checked> Enabled
+              </label>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">5G SSID Name</label>
+                <input type="text" id="wifi5Ssid" class="form-control" placeholder="Flexeree_5G">
+              </div>
+              <div class="form-group">
+                <label class="form-label">5G Passphrase</label>
+                <input type="text" id="wifi5Pass" class="form-control" placeholder="Wi-Fi Password">
+              </div>
+            </div>
+            <button onclick="saveWifiConfig('2')" class="btn btn-primary btn-sm">Push 5G Configuration</button>
+          </div>
+        </div>
+
+        <div id="tabContent-actions" class="hidden">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;">
+            <div class="panel" style="margin-bottom: 0; padding: 16px; text-align: center;">
+              <i class="ph-bold ph-arrows-clockwise" style="font-size: 24px; color: var(--cyan-400);"></i>
+              <div style="font-weight: 700; font-size: 13px; margin: 8px 0 4px 0;">Refresh Object Tree</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Request real-time TR-069 values</div>
+              <button onclick="deviceAction('refresh')" class="btn btn-secondary btn-sm" style="width: 100%;">Refresh Now</button>
+            </div>
+
+            <div class="panel" style="margin-bottom: 0; padding: 16px; text-align: center;">
+              <i class="ph-bold ph-power" style="font-size: 24px; color: var(--amber-500);"></i>
+              <div style="font-weight: 700; font-size: 13px; margin: 8px 0 4px 0;">Remote Reboot</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Gracefully restart subscriber ONT</div>
+              <button onclick="deviceAction('reboot')" class="btn btn-warning btn-sm" style="width: 100%;">Reboot ONT</button>
+            </div>
+
+            <div class="panel" style="margin-bottom: 0; padding: 16px; text-align: center;">
+              <i class="ph-bold ph-skull" style="font-size: 24px; color: var(--rose-500);"></i>
+              <div style="font-weight: 700; font-size: 13px; margin: 8px 0 4px 0;">Factory Reset</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Wipe configuration to default</div>
+              <button onclick="deviceAction('factoryReset')" class="btn btn-danger btn-sm" style="width: 100%;">Factory Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabContent-diag" class="hidden">
+          <div class="panel" style="margin-bottom: 0; padding: 16px;">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Test Method</label>
+                <select id="diagType" class="form-control">
+                  <option value="IPPing">Ping (IPPingDiagnostics)</option>
+                  <option value="TraceRoute">Traceroute (TraceRouteDiagnostics)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Host Destination</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="diagHost" value="8.8.8.8" class="form-control">
+                  <button onclick="runDiagnostics()" class="btn btn-primary btn-sm" style="white-space: nowrap;">
+                    <i class="ph-bold ph-play"></i> Execute
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="diagOutput" class="hidden" style="margin-top: 12px; padding: 12px; border-radius: 6px; background: var(--bg-base); border: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 11px; color: var(--cyan-400);"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="addUserModal" class="modal-backdrop hidden">
+    <div class="modal-frame" style="max-width: 440px;">
+      <div class="modal-top">
+        <div style="font-size: 14px; font-weight: 700;">Create Staff Account</div>
+        <button onclick="closeAddUserModal()" class="btn btn-secondary btn-sm" style="padding: 4px 8px;">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="handleCreateUser(event)">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="newFullName" required placeholder="John Doe" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" id="newUsername" required placeholder="johndoe" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="newPassword" required placeholder="••••••••" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role Authority</label>
+            <select id="newRole" class="form-control">
+              <option value="Super Admin">Super Admin (Full System Control)</option>
+              <option value="Admin">Admin (Device & User Control)</option>
+              <option value="Technician">Technician (WAN / Wi-Fi / Diagnostics)</option>
+              <option value="Viewer">Viewer (Telemetry Read-Only)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px; padding: 10px;">
+            Create Staff Account
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let authToken = localStorage.getItem('flexeree_token') || null;
+    let currentUser = null;
+    let allDevices = [];
+    let selectedDevice = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (authToken) {
+        verifyToken();
+      } else {
+        showLogin();
+      }
+    });
+
+    async function apiRequest(endpoint, method = 'GET', body = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+
+      const opts = { method, headers };
+      if (body) opts.body = JSON.stringify(body);
+
+      const res = await fetch('/api' + endpoint, opts);
+      if (res.status === 401) {
+        logout();
+        throw new Error('Session expired');
+      }
+      return res.json();
+    }
+
+    async function verifyToken() {
+      try {
+        const data = await apiRequest('/auth/me');
+        if (data.user) {
+          currentUser = data.user;
+          renderUserHeader();
+          navigate('dashboard');
+        } else {
+          showLogin();
+        }
+      } catch (e) {
+        showLogin();
+      }
+    }
+
+    function renderUserHeader() {
+      if (!currentUser) return;
+      document.getElementById('userFullName').innerText = currentUser.fullName || currentUser.username;
+      document.getElementById('userRoleBadge').innerText = currentUser.role;
+      document.getElementById('userHeaderControls').classList.remove('hidden');
+      document.getElementById('mainSidebar').classList.remove('hidden');
+    }
+
+    function showLogin() {
+      document.getElementById('userHeaderControls').classList.add('hidden');
+      document.getElementById('mainSidebar').classList.add('hidden');
+      ['dashboard', 'devices', 'presets', 'audit', 'users'].forEach(v => {
+        document.getElementById('view-' + v).classList.add('hidden');
+      });
+      document.getElementById('view-login').classList.remove('hidden');
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('loginUsername').value;
+      const p = document.getElementById('loginPassword').value;
+      const errBox = document.getElementById('loginError');
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+
+        authToken = data.token;
+        localStorage.setItem('flexeree_token', authToken);
+        currentUser = data.user;
+        renderUserHeader();
+        errBox.classList.add('hidden');
+        navigate('dashboard');
+      } catch (err) {
+        errBox.innerText = err.message;
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      authToken = null;
+      currentUser = null;
+      localStorage.removeItem('flexeree_token');
+      showLogin();
+    }
+
+    function navigate(view) {
+      const views = ['login', 'dashboard', 'devices', 'presets', 'audit', 'users'];
+      views.forEach(v => {
+        const el = document.getElementById('view-' + v);
+        if (el) el.classList.add('hidden');
+        const btn = document.getElementById('nav-' + v);
+        if (btn) btn.classList.remove('active');
+      });
+
+      const activeEl = document.getElementById('view-' + view);
+      if (activeEl) activeEl.classList.remove('hidden');
+      const activeBtn = document.getElementById('nav-' + view);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      if (view === 'dashboard') loadDashboard();
+      if (view === 'devices') loadDevices();
+      if (view === 'presets') loadPresets();
+      if (view === 'audit') loadAudit();
+      if (view === 'users') loadUsers();
+    }
+
+    async function loadDashboard() {
+      try {
+        const data = await apiRequest('/dashboard/stats');
+        document.getElementById('statTotal').innerText = data.total;
+        document.getElementById('statOnline').innerText = data.online;
+        document.getElementById('statOffline').innerText = data.offline;
+
+        const list = document.getElementById('dashboardEventsList');
+        if (data.recentEvents && data.recentEvents.length) {
+          list.innerHTML = data.recentEvents.map(e => `
+            <tr>
+              <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${new Date(e.timestamp).toLocaleTimeString()}</td>
+              <td style="font-weight: 700; color: var(--text-primary);">${e.action}</td>
+              <td style="color: var(--cyan-400);">${e.user}</td>
+              <td style="font-family: var(--font-mono);">${e.target || '-'}</td>
+              <td style="color: var(--text-secondary);">${e.details || ''}</td>
+            </tr>
+          `).join('');
+        } else {
+          list.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No operations recorded yet.</td></tr>';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadDevices() {
+      try {
+        const data = await apiRequest('/devices');
+        allDevices = data.devices || [];
+        renderDevicesTable(allDevices);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderDevicesTable(devices) {
+      const tbody = document.getElementById('devicesTableBody');
+      if (!devices.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">No ONT devices registered yet. Connect a Syrotech ONT to port 7547.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = devices.map(d => {
+        const isOnline = d.isOnline;
+        let rxDisplay = '<span style="color: var(--text-muted);">-</span>';
+        if (d.rxPower) {
+          const val = parseFloat(d.rxPower);
+          const color = (val >= -27 && val <= -8) ? 'var(--emerald-500)' : 'var(--rose-500)';
+          rxDisplay = `<span style="color: ${color}; font-weight: 600;">${d.rxPower} dBm</span>`;
+        }
+
+        return `
+          <tr>
+            <td>
+              <span class="status-badge ${isOnline ? 'online' : 'offline'}">
+                <span class="status-indicator-dot"></span>
+                ${isOnline ? 'ONLINE' : 'OFFLINE'}
+              </span>
+            </td>
+            <td style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);">${d.serialNumber}</td>
+            <td>
+              <div style="font-weight: 600; color: var(--text-primary);">${d.productClass}</div>
+              <div style="font-size: 10px; color: var(--text-muted);">${d.manufacturer} · FW: ${d.softwareVersion}</div>
+            </td>
+            <td>
+              <div style="font-family: var(--font-mono); color: var(--text-primary);">${d.wanIp || 'Dynamic / No IP'}</div>
+              <div style="font-size: 10px; color: var(--text-muted);">${d.pppoeUser || 'PPPoE Not Configured'}</div>
+            </td>
+            <td style="font-family: var(--font-mono);">${rxDisplay}</td>
+            <td>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                ${(d.tags || []).map(t => `<span class="tag-pill">${t}</span>`).join('')}
+              </div>
+            </td>
+            <td style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">
+              ${d.lastInform ? new Date(d.lastInform).toLocaleTimeString() : 'Never'}
+            </td>
+            <td style="text-align: right;">
+              <button onclick="openDeviceDetail('${d.id}')" class="btn btn-secondary btn-sm">
+                Manage <i class="ph-bold ph-caret-right"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterDevices() {
+      const q = document.getElementById('deviceSearchInput').value.toLowerCase();
+      const filtered = allDevices.filter(d =>
+        d.serialNumber.toLowerCase().includes(q) ||
+        d.productClass.toLowerCase().includes(q) ||
+        d.manufacturer.toLowerCase().includes(q) ||
+        (d.wanIp && d.wanIp.toLowerCase().includes(q)) ||
+        (d.tags && d.tags.some(t => t.toLowerCase().includes(q)))
+      );
+      renderDevicesTable(filtered);
+    }
+
+    async function openDeviceDetail(id) {
+      selectedDevice = allDevices.find(d => d.id === id);
+      if (!selectedDevice) return;
+
+      document.getElementById('modalDeviceTitle').innerText = `${selectedDevice.productClass} · ${selectedDevice.serialNumber}`;
+      document.getElementById('modalDeviceSubtitle').innerText = `SYSTEM ID: ${selectedDevice.id} | WAN IP: ${selectedDevice.wanIp || 'N/A'}`;
+
+      document.getElementById('modalManufacturer').innerText = selectedDevice.manufacturer;
+      document.getElementById('modalProductClass').innerText = selectedDevice.productClass;
+      document.getElementById('modalSerial').innerText = selectedDevice.serialNumber;
+      document.getElementById('modalHwVer').innerText = selectedDevice.hardwareVersion;
+      document.getElementById('modalSwVer').innerText = selectedDevice.softwareVersion;
+      document.getElementById('modalLastInform').innerText = selectedDevice.lastInform ? new Date(selectedDevice.lastInform).toLocaleString() : 'N/A';
+
+      const rxVal = selectedDevice.rxPower ? `${selectedDevice.rxPower} dBm` : 'N/A';
+      document.getElementById('modalRxPower').innerText = rxVal;
+      const txVal = selectedDevice.txPower ? `${selectedDevice.txPower} dBm` : 'N/A';
+      document.getElementById('modalTxPower').innerText = txVal;
+
+      renderModalTags();
+      switchTab('overview');
+      document.getElementById('deviceModal').classList.remove('hidden');
+    }
+
+    function closeDeviceModal() {
+      document.getElementById('deviceModal').classList.add('hidden');
+      selectedDevice = null;
+    }
+
+    function switchTab(tab) {
+      ['overview', 'wan', 'wifi', 'actions', 'diag'].forEach(t => {
+        const content = document.getElementById('tabContent-' + t);
+        const btn = document.getElementById('tabBtn-' + t);
+        if (content) content.classList.add('hidden');
+        if (btn) btn.classList.remove('active');
+      });
+
+      const activeContent = document.getElementById('tabContent-' + tab);
+      const activeBtn = document.getElementById('tabBtn-' + tab);
+      if (activeContent) activeContent.classList.remove('hidden');
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    function renderModalTags() {
+      const container = document.getElementById('modalTagsList');
+      if (!selectedDevice.tags || !selectedDevice.tags.length) {
+        container.innerHTML = '<span style="color: var(--text-muted); font-size: 11px;">No grouping tags assigned.</span>';
+        return;
+      }
+      container.innerHTML = selectedDevice.tags.map(t => `
+        <span class="tag-pill">
+          ${t}
+          <span onclick="removeDeviceTag('${t}')" class="remove-tag-btn">×</span>
+        </span>
+      `).join('');
+    }
+
+    async function addDeviceTag() {
+      const input = document.getElementById('newTagInput');
+      const tag = input.value.trim();
+      if (!tag || !selectedDevice) return;
+
+      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/tags', 'POST', { tag, action: 'add' });
+      selectedDevice.tags.push(tag);
+      renderModalTags();
+      input.value = '';
+    }
+
+    async function removeDeviceTag(tag) {
+      if (!selectedDevice) return;
+      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/tags', 'POST', { tag, action: 'remove' });
+      selectedDevice.tags = selectedDevice.tags.filter(t => t !== tag);
+      renderModalTags();
+    }
+
+    async function saveWanConfig() {
+      if (!selectedDevice) return;
+      const body = {
+        connectionType: document.getElementById('wanConnType').value,
+        vlanId: document.getElementById('wanVlanId').value,
+        username: document.getElementById('wanPppoeUser').value,
+        password: document.getElementById('wanPppoePass').value,
+        dns1: document.getElementById('wanDns1').value,
+        dns2: document.getElementById('wanDns2').value
+      };
+      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/wan-config', 'POST', body);
+      alert('Carrier WAN provisioning command dispatched via TR-069!');
+    }
+
+    async function saveWifiConfig(radio) {
+      if (!selectedDevice) return;
+      const is5g = radio === '2';
+      const body = {
+        radio,
+        ssid: document.getElementById(is5g ? 'wifi5Ssid' : 'wifi24Ssid').value,
+        password: document.getElementById(is5g ? 'wifi5Pass' : 'wifi24Pass').value,
+        enabled: document.getElementById(is5g ? 'wifi5Enabled' : 'wifi24Enabled').checked
+      };
+      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/wifi-config', 'POST', body);
+      alert(`Wi-Fi Radio ${is5g ? '5G' : '2.4G'} parameter task successfully queued!`);
+    }
+
+    async function deviceAction(action) {
+      if (!selectedDevice) return;
+      if (action === 'reboot' && !confirm('WARNING: Confirm reboot dispatch to subscriber ONT?')) return;
+      if (action === 'factoryReset' && !confirm('CRITICAL ACTION: This will completely wipe the ONT to factory defaults. Proceed?')) return;
+
+      if (action === 'refresh') await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/refresh', 'POST');
+      if (action === 'reboot') await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/reboot', 'POST');
+      if (action === 'factoryReset') await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/factory-reset', 'POST');
+
+      alert(`Command [${action}] queued for ONT connection handshake.`);
+    }
+
+    async function runDiagnostics() {
+      if (!selectedDevice) return;
+      const type = document.getElementById('diagType').value;
+      const host = document.getElementById('diagHost').value;
+      const outBox = document.getElementById('diagOutput');
+
+      outBox.innerText = `Dispatching ${type} test to ${host} on ONT... Waiting for inform cycle...`;
+      outBox.classList.remove('hidden');
+
+      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/diagnostics', 'POST', { type, host });
+      outBox.innerText = `Diagnostic task [${type}] queued. Results will be gathered upon ONT Inform handshake.`;
+    }
+
+    async function loadPresets() {
+      const data = await apiRequest('/presets');
+      const list = document.getElementById('presetsList');
+      if (!data.presets || !data.presets.length) {
+        list.innerHTML = '<div style="grid-column: span 2; padding: 24px; text-align: center; color: var(--text-muted);">No ZTP presets active. Define rules for auto-provisioning Syrotech ONTs.</div>';
+        return;
+      }
+      list.innerHTML = data.presets.map(p => `
+        <div class="panel" style="margin-bottom: 0; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">${p._id}</div>
+            <span class="brand-badge">ZTP RULE</span>
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+            Events: ${p.events ? Object.keys(p.events).join(', ') : 'Any'}
+          </div>
+          <div style="font-size: 11px; color: var(--cyan-400); font-family: var(--font-mono);">
+            Condition: ${p.precondition || 'None (All ONTs)'}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadAudit() {
+      const data = await apiRequest('/audit-logs');
+      const tbody = document.getElementById('auditTableBody');
+      if (!data.logs || !data.logs.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">No audit records found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.logs.map(l => `
+        <tr>
+          <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${new Date(l.timestamp).toLocaleString()}</td>
+          <td style="font-weight: 600; color: var(--text-primary);">${l.user}</td>
+          <td><span class="tag-pill" style="color: var(--cyan-400);">${l.role}</span></td>
+          <td style="font-weight: 700; color: var(--text-primary);">${l.action}</td>
+          <td style="font-family: var(--font-mono);">${l.target || '-'}</td>
+          <td style="color: var(--text-secondary); font-size: 11px;">${l.details || ''}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadUsers() {
+      const data = await apiRequest('/users');
+      const tbody = document.getElementById('usersTableBody');
+      if (!data.users || !data.users.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">No staff accounts found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.users.map(u => `
+        <tr>
+          <td style="font-weight: 600; color: var(--text-primary);">${u.fullName || '-'}</td>
+          <td style="font-family: var(--font-mono);">${u.username}</td>
+          <td><span class="tag-pill" style="color: var(--cyan-400);">${u.role}</span></td>
+          <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${new Date(u.createdAt).toLocaleDateString()}</td>
+          <td style="text-align: right;">
+            ${u.username !== 'admin' ? `<button onclick="deleteUser('${u._id}')" class="btn btn-danger btn-sm">Delete</button>` : '<span style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">MASTER</span>'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openNewUserModal() {
+      document.getElementById('addUserModal').classList.remove('hidden');
+    }
+
+    function closeAddUserModal() {
+      document.getElementById('addUserModal').classList.add('hidden');
+    }
+
+    async function handleCreateUser(e) {
+      e.preventDefault();
+      const body = {
+        fullName: document.getElementById('newFullName').value,
+        username: document.getElementById('newUsername').value,
+        password: document.getElementById('newPassword').value,
+        role: document.getElementById('newRole').value
+      };
+      await apiRequest('/users', 'POST', body);
+      closeAddUserModal();
+      loadUsers();
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Confirm deletion of operator account?')) return;
+      await apiRequest('/users/' + id, 'DELETE');
+      loadUsers();
+    }
+  </script>
+</body>
+</html>
