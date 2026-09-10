@@ -696,19 +696,315 @@
     .tag-pill .remove-tag-btn:hover {
       color: var(--rose-500);
     }
+
+    /* ---- LOGO IMAGE ---- */
+    .brand-logo-img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: #ffffff;
+      padding: 2px;
+      border: 1px solid var(--border-strong);
+    }
+
+    /* ---- FILTER BAR ---- */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+    }
+    .filter-bar .search-input-group { max-width: 280px; flex: 1; min-width: 180px; }
+    .filter-select {
+      padding: 8px 28px 8px 12px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 12px;
+      font-family: inherit;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a2b4ce' viewBox='0 0 256 256'%3E%3Cpath d='M213.66 101.66l-80 80a8 8 0 01-11.32 0l-80-80a8 8 0 0111.32-11.32L128 164.69l74.34-74.35a8 8 0 0111.32 11.32z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      cursor: pointer;
+    }
+    .filter-select:focus { outline: none; border-color: var(--cyan-500); }
+
+    /* ---- PAGINATION ---- */
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+    }
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .page-btn {
+      min-width: 30px;
+      height: 30px;
+      padding: 0 8px;
+      border-radius: 4px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--border-active);
+      color: var(--text-primary);
+    }
+    .page-btn.active {
+      background: #0369a1;
+      border-color: #0369a1;
+      color: #ffffff;
+    }
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .page-info {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* ---- WIFI READBACK ---- */
+    .wifi-readback-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-left: 3px solid var(--cyan-500);
+      padding: 12px 14px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .wifi-readback-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .wifi-readback-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      min-width: 80px;
+    }
+    .wifi-readback-value {
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      word-break: break-all;
+    }
+    .wifi-readback-value.muted { color: var(--text-muted); }
+    .password-toggle {
+      cursor: pointer;
+      color: var(--cyan-400);
+      font-size: 11px;
+      margin-left: 6px;
+      user-select: none;
+    }
+    .password-toggle:hover { color: var(--cyan-500); }
+
+    /* ---- MODAL: WIFI BAND HEADER ---- */
+    .wifi-band-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* ---- BULK ACTION BUTTON ROW ---- */
+    .bulk-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* ---- CHECKBOX ---- */
+    .row-checkbox {
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      accent-color: var(--cyan-500);
+    }
+
+    /* ---- MOBILE RESPONSIVE ---- */
+    .mobile-menu-btn {
+      display: none;
+      background: transparent;
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      color: var(--text-primary);
+      padding: 6px 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    @media (max-width: 900px) {
+      .app-viewport { height: auto; min-height: calc(100vh - 56px); }
+      .sidebar {
+        position: fixed;
+        top: 56px;
+        left: -240px;
+        height: calc(100vh - 56px);
+        z-index: 60;
+        transition: left 0.2s ease;
+        box-shadow: 4px 0 12px rgba(0,0,0,0.4);
+      }
+      .sidebar.open { left: 0; }
+      .mobile-menu-btn { display: inline-flex; }
+      .header-center-telemetry { display: none !important; }
+      .content-area { padding: 16px; }
+      .metric-strip { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .metric-cell { padding: 12px; }
+      .metric-value { font-size: 22px; }
+      .form-grid { grid-template-columns: 1fr; }
+      #presetsList { grid-template-columns: 1fr !important; }
+      .modal-frame { max-height: 95vh; }
+      .modal-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 0; }
+      .tab-btn { white-space: nowrap; flex-shrink: 0; }
+      .command-banner { flex-direction: column; align-items: flex-start; }
+      .top-header { padding: 0 12px; }
+      .brand-title span:first-child { font-size: 13px; }
+    }
+    @media (max-width: 600px) {
+      .metric-strip { grid-template-columns: 1fr 1fr; }
+      .modal-top { padding: 12px; }
+      .modal-body { padding: 14px; }
+      .panel { border-radius: 6px; }
+      .filter-bar { padding: 10px; }
+      .filter-bar .search-input-group { min-width: 140px; max-width: 100%; }
+      .user-name { font-size: 11px; }
+    }
+
+    /* ---- LOADING SPINNER ---- */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border-strong);
+      border-top-color: var(--cyan-400);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- TOAST ---- */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: calc(100vw - 32px);
+    }
+    .toast {
+      padding: 12px 16px;
+      background: var(--bg-surface-overlay);
+      border: 1px solid var(--border-strong);
+      border-left: 4px solid var(--cyan-500);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      animation: slideInRight 0.25s ease-out;
+      max-width: 380px;
+    }
+    .toast.success { border-left-color: var(--emerald-500); }
+    .toast.error { border-left-color: var(--rose-500); }
+    .toast.warning { border-left-color: var(--amber-500); }
+    @keyframes slideInRight {
+      from { transform: translateX(120%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ---- PRESET JSON EDITOR ---- */
+    .preset-textarea {
+      width: 100%;
+      min-height: 240px;
+      padding: 10px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      resize: vertical;
+    }
+    .preset-textarea:focus { outline: none; border-color: var(--cyan-500); }
+
+    /* ---- FIRMWARE FILES DROPDOWN ---- */
+    .fw-list {
+      max-height: 220px;
+      overflow-y: auto;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      margin-top: 6px;
+    }
+    .fw-list-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .fw-list-item:last-child { border-bottom: none; }
+    .fw-list-item:hover { background: var(--bg-surface-raised); color: var(--text-primary); }
+    .fw-list-item.selected { background: var(--bg-surface-overlay); color: var(--cyan-400); border-left: 3px solid var(--cyan-500); }
+
+    /* ---- HIDDEN INPUT GROUP ---- */
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
   <header class="top-header">
-    <div class="brand-group">
-      <div class="brand-emblem">
-        <i class="ph-bold ph-broadcast"></i>
-      </div>
-      <div>
-        <div class="brand-title">
-          <span>Flexeree ACS</span>
-          <span class="brand-badge">NOC PRO</span>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+        <i class="ph-bold ph-list"></i>
+      </button>
+      <div class="brand-group">
+        <img src="/logo.png" alt="Flexeree" class="brand-logo-img">
+        <div>
+          <div class="brand-title">
+            <span>Flexeree ACS</span>
+            <span class="brand-badge">NOC PRO</span>
+          </div>
         </div>
       </div>
     </div>
@@ -816,7 +1112,7 @@
               <i class="ph-bold ph-wifi-high text-emerald"></i>
             </div>
             <div id="statOnline" class="metric-value text-emerald">0</div>
-            <div class="metric-sub">Active Inform within 10 min</div>
+            <div class="metric-sub">Active Inform within 5 sec</div>
           </div>
 
           <div class="metric-cell">
@@ -876,15 +1172,48 @@
 
       <section id="view-devices" class="hidden">
         <div class="action-toolbar">
-          <div class="search-input-group">
-            <i class="ph-bold ph-magnifying-glass"></i>
-            <input type="text" id="deviceSearchInput" onkeyup="filterDevices()" class="form-control" placeholder="Search serial, IP, customer, OLT, tag...">
+          <div>
+            <div style="font-size: 15px; font-weight: 700;">ONT Subscriber Inventory</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Syrotech GPON + Multi-vendor fleet · <span id="devicesCountLabel">— devices</span></div>
           </div>
-          <div style="display: flex; gap: 8px;">
+          <div class="bulk-row">
+            <button onclick="openBulkRebootModal()" class="btn btn-warning btn-sm">
+              <i class="ph-bold ph-arrows-clockwise"></i> Bulk Reboot
+            </button>
+            <button onclick="exportDevices('csv')" class="btn btn-secondary btn-sm">
+              <i class="ph-bold ph-file-csv"></i> Export CSV
+            </button>
+            <button onclick="exportDevices('xlsx')" class="btn btn-secondary btn-sm">
+              <i class="ph-bold ph-file-xls"></i> Export Excel
+            </button>
             <button onclick="loadDevices()" class="btn btn-secondary btn-sm">
-              <i class="ph-bold ph-arrows-clockwise"></i> Refresh Devices
+              <i class="ph-bold ph-arrows-clockwise"></i> Refresh
             </button>
           </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="search-input-group">
+            <i class="ph-bold ph-magnifying-glass"></i>
+            <input type="text" id="deviceSearchInput" onkeyup="onDeviceFilterChange()" class="form-control" placeholder="Search serial, model, IP, tag...">
+          </div>
+          <select id="deviceStatusFilter" onchange="onDeviceFilterChange()" class="filter-select">
+            <option value="">All Status</option>
+            <option value="online">Online</option>
+            <option value="offline">Offline</option>
+          </select>
+          <select id="deviceModelFilter" onchange="onDeviceFilterChange()" class="filter-select">
+            <option value="">All Models</option>
+          </select>
+          <select id="deviceTagFilter" onchange="onDeviceFilterChange()" class="filter-select">
+            <option value="">All Tags</option>
+          </select>
+          <select id="devicePageSize" onchange="onDeviceFilterChange()" class="filter-select">
+            <option value="25">25 / page</option>
+            <option value="50" selected>50 / page</option>
+            <option value="100">100 / page</option>
+            <option value="200">200 / page</option>
+          </select>
         </div>
 
         <div class="panel">
@@ -892,6 +1221,7 @@
             <table class="carrier-table">
               <thead>
                 <tr>
+                  <th style="width: 28px;"><input type="checkbox" id="deviceSelectAll" class="row-checkbox" onchange="toggleSelectAllDevices(this)"></th>
                   <th>Status</th>
                   <th>Serial Number / ID</th>
                   <th>Model & Vendor</th>
@@ -903,10 +1233,11 @@
                 </tr>
               </thead>
               <tbody id="devicesTableBody">
-                <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Loading ONT inventory...</td></tr>
+                <tr><td colspan="9" style="text-align: center; color: var(--text-muted);">Loading ONT inventory...</td></tr>
               </tbody>
             </table>
           </div>
+          <div id="devicesPagination" class="pagination-bar"></div>
         </div>
       </section>
 
@@ -928,12 +1259,40 @@
         <div class="action-toolbar">
           <div>
             <div style="font-size: 15px; font-weight: 700;">Immutable Audit Trail</div>
-            <div style="font-size: 11px; color: var(--text-muted);">Cryptographically logged operator interventions and device dispatches</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Cryptographically logged operator interventions and device dispatches · <span id="auditCountLabel">— records</span></div>
           </div>
-          <button onclick="loadAudit()" class="btn btn-secondary btn-sm">
-            <i class="ph-bold ph-arrows-clockwise"></i> Refresh Audit
-          </button>
+          <div class="bulk-row">
+            <button onclick="exportAudit('csv')" class="btn btn-secondary btn-sm">
+              <i class="ph-bold ph-file-csv"></i> CSV
+            </button>
+            <button onclick="exportAudit('xlsx')" class="btn btn-secondary btn-sm">
+              <i class="ph-bold ph-file-xls"></i> Excel
+            </button>
+            <button onclick="clearAuditLogs()" class="btn btn-danger btn-sm">
+              <i class="ph-bold ph-trash"></i> Clear Log Data
+            </button>
+            <button onclick="loadAudit()" class="btn btn-secondary btn-sm">
+              <i class="ph-bold ph-arrows-clockwise"></i> Refresh
+            </button>
+          </div>
         </div>
+
+        <div class="filter-bar">
+          <div class="search-input-group">
+            <i class="ph-bold ph-magnifying-glass"></i>
+            <input type="text" id="auditUserInput" onkeyup="onAuditFilterChange()" class="form-control" placeholder="Filter by operator...">
+          </div>
+          <input type="text" id="auditActionInput" onkeyup="onAuditFilterChange()" class="form-control" style="max-width:200px;" placeholder="Action (e.g. REBOOT)...">
+          <input type="date" id="auditFromDate" onchange="onAuditFilterChange()" class="form-control" style="max-width:160px;">
+          <input type="date" id="auditToDate" onchange="onAuditFilterChange()" class="form-control" style="max-width:160px;">
+          <select id="auditPageSize" onchange="onAuditFilterChange()" class="filter-select">
+            <option value="50">50 / page</option>
+            <option value="100" selected>100 / page</option>
+            <option value="250">250 / page</option>
+            <option value="500">500 / page</option>
+          </select>
+        </div>
+
         <div class="panel">
           <div class="table-wrapper">
             <table class="carrier-table">
@@ -945,13 +1304,15 @@
                   <th>Action</th>
                   <th>Target ONT</th>
                   <th>Details</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody id="auditTableBody">
-                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading audit records...</td></tr>
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading audit records...</td></tr>
               </tbody>
             </table>
           </div>
+          <div id="auditPagination" class="pagination-bar"></div>
         </div>
       </section>
 
@@ -959,11 +1320,17 @@
         <div class="action-toolbar">
           <div>
             <div style="font-size: 15px; font-weight: 700;">NOC Access Management (RBAC)</div>
-            <div style="font-size: 11px; color: var(--text-muted);">Manage administrator, technician, and operator permissions</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Manage administrator, technician, and operator permissions · <span id="usersCountLabel">— accounts</span></div>
           </div>
-          <button onclick="openNewUserModal()" class="btn btn-primary btn-sm">
-            <i class="ph-bold ph-user-plus"></i> Create Staff Account
-          </button>
+          <div class="bulk-row">
+            <select id="usersPageSize" onchange="onUsersFilterChange()" class="filter-select">
+              <option value="25">25 / page</option>
+              <option value="50" selected>50 / page</option>
+            </select>
+            <button onclick="openNewUserModal()" class="btn btn-primary btn-sm">
+              <i class="ph-bold ph-user-plus"></i> Create Staff Account
+            </button>
+          </div>
         </div>
         <div class="panel">
           <div class="table-wrapper">
@@ -982,6 +1349,7 @@
               </tbody>
             </table>
           </div>
+          <div id="usersPagination" class="pagination-bar"></div>
         </div>
       </section>
 
@@ -1004,6 +1372,7 @@
         <button onclick="switchTab('overview')" id="tabBtn-overview" class="tab-btn active">Overview & Optics</button>
         <button onclick="switchTab('wan')" id="tabBtn-wan" class="tab-btn">WAN / PPPoE / VLAN</button>
         <button onclick="switchTab('wifi')" id="tabBtn-wifi" class="tab-btn">Wi-Fi (2.4G / 5G)</button>
+        <button onclick="switchTab('firmware')" id="tabBtn-firmware" class="tab-btn">Firmware Upgrade</button>
         <button onclick="switchTab('actions')" id="tabBtn-actions" class="tab-btn">Remote Actions</button>
         <button onclick="switchTab('diag')" id="tabBtn-diag" class="tab-btn">Diagnostics</button>
       </div>
@@ -1097,7 +1466,19 @@
 
         <div id="tabContent-wifi" class="hidden" style="display: flex; flex-direction: column; gap: 14px;">
           <div class="panel" style="margin-bottom: 0; padding: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 12px; margin-bottom: 10px;">
+              <i class="ph-bold ph-eye"></i> Current ONT Wi-Fi Configuration (Read-Only)
+            </div>
+            <div id="wifiReadbackContainer" style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="color: var(--text-muted); font-size: 11px;">Loading current Wi-Fi readback...</div>
+            </div>
+            <button onclick="refreshWifiReadback()" class="btn btn-secondary btn-sm" style="margin-top: 8px;">
+              <i class="ph-bold ph-arrows-clockwise"></i> Refresh Readback
+            </button>
+          </div>
+
+          <div class="panel" style="margin-bottom: 0; padding: 16px;">
+            <div class="wifi-band-header">
               <div style="font-weight: 700; color: var(--cyan-400); font-size: 12px;"><i class="ph-bold ph-wifi-high"></i> 2.4 GHz Primary Radio</div>
               <label style="display: flex; align-items: center; gap: 6px; font-size: 11px;">
                 <input type="checkbox" id="wifi24Enabled" checked> Enabled
@@ -1112,12 +1493,16 @@
                 <label class="form-label">WPA2/WPA3 Passphrase</label>
                 <input type="text" id="wifi24Pass" class="form-control" placeholder="Wi-Fi Password">
               </div>
+              <div class="form-group">
+                <label class="form-label">Channel (1-13)</label>
+                <input type="number" id="wifi24Channel" class="form-control" placeholder="Auto" min="1" max="13">
+              </div>
             </div>
             <button onclick="saveWifiConfig('1')" class="btn btn-primary btn-sm">Push 2.4G Configuration</button>
           </div>
 
           <div class="panel" style="margin-bottom: 0; padding: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div class="wifi-band-header">
               <div style="font-weight: 700; color: var(--emerald-500); font-size: 12px;"><i class="ph-bold ph-wifi-high"></i> 5 GHz High-Speed Radio</div>
               <label style="display: flex; align-items: center; gap: 6px; font-size: 11px;">
                 <input type="checkbox" id="wifi5Enabled" checked> Enabled
@@ -1132,8 +1517,56 @@
                 <label class="form-label">5G Passphrase</label>
                 <input type="text" id="wifi5Pass" class="form-control" placeholder="Wi-Fi Password">
               </div>
+              <div class="form-group">
+                <label class="form-label">Channel (36-165)</label>
+                <input type="number" id="wifi5Channel" class="form-control" placeholder="Auto" min="36" max="165">
+              </div>
             </div>
             <button onclick="saveWifiConfig('2')" class="btn btn-primary btn-sm">Push 5G Configuration</button>
+          </div>
+        </div>
+
+        <div id="tabContent-firmware" class="hidden">
+          <div class="panel" style="margin-bottom: 0; padding: 16px;">
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 13px; margin-bottom: 6px;">
+              <i class="ph-bold ph-package"></i> ONT Firmware Upgrade
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 14px;">
+              Upload a firmware image to the GenieACS filesystem (port 7567), then push the upgrade to this ONT.
+              Files are stored on the ACS file server; pick one to dispatch.
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Upload New Firmware (to GenieACS FS)</label>
+              <div style="display: flex; gap: 8px;">
+                <input type="file" id="firmwareFileInput" accept=".img,.bin,.fw" class="form-control" style="flex: 1;">
+                <button onclick="uploadFirmware()" class="btn btn-secondary btn-sm" style="white-space: nowrap;">
+                  <i class="ph-bold ph-upload"></i> Upload
+                </button>
+              </div>
+              <div id="firmwareUploadStatus" style="font-size: 11px; margin-top: 4px; color: var(--text-muted);"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Available Firmware Files</label>
+              <button onclick="loadFirmwareFiles()" class="btn btn-secondary btn-sm" style="margin-bottom: 6px;">
+                <i class="ph-bold ph-arrows-clockwise"></i> Refresh List
+              </button>
+              <div id="firmwareFilesList" class="fw-list">
+                <div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 11px;">Click "Refresh List" to load.</div>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-subtle); padding-top: 14px; margin-top: 14px;">
+              <div class="form-group">
+                <label class="form-label">Selected Firmware</label>
+                <input type="text" id="firmwareSelectedFile" class="form-control" placeholder="Select a file above or paste filename">
+              </div>
+              <button onclick="pushFirmwareUpgrade()" class="btn btn-warning">
+                <i class="ph-bold ph-download"></i> Dispatch Firmware Upgrade to ONT
+              </button>
+              <div id="firmwarePushStatus" style="font-size: 11px; margin-top: 8px; color: var(--text-muted);"></div>
+            </div>
           </div>
         </div>
 
@@ -1229,35 +1662,185 @@
     </div>
   </div>
 
+  <div id="bulkRebootModal" class="modal-backdrop hidden">
+    <div class="modal-frame" style="max-width: 520px;">
+      <div class="modal-top">
+        <div>
+          <div style="font-size: 14px; font-weight: 700;">Bulk Reboot / Refresh</div>
+          <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">Trigger reboot or object refresh across multiple ONTs</div>
+        </div>
+        <button onclick="closeBulkRebootModal()" class="btn btn-secondary btn-sm" style="padding: 4px 8px;">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Target Mode</label>
+          <select id="bulkRebootMode" class="form-control" onchange="onBulkModeChange()">
+            <option value="byTag">By Grouping Tag</option>
+            <option value="bySelected">By Selected Checkboxes</option>
+            <option value="byModel">By Model (Product Class)</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="bulkByTagGroup">
+          <label class="form-label">Tag</label>
+          <select id="bulkRebootTag" class="form-control">
+            <option value="">-- pick a tag --</option>
+          </select>
+        </div>
+
+        <div class="form-group hidden" id="bulkByModelGroup">
+          <label class="form-label">Model (Product Class)</label>
+          <select id="bulkRebootModel" class="form-control">
+            <option value="">-- pick a model --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Action</label>
+          <select id="bulkRebootAction" class="form-control">
+            <option value="reboot">Reboot (graceful restart)</option>
+            <option value="refresh">Refresh Object Tree (no reboot)</option>
+          </select>
+        </div>
+
+        <div id="bulkRebootPreview" style="padding: 10px; background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: 6px; font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">
+          Select target & action to preview affected device count.
+        </div>
+
+        <button onclick="executeBulkReboot()" class="btn btn-warning" style="width: 100%; padding: 10px;">
+          <i class="ph-bold ph-arrows-clockwise"></i> Dispatch Bulk Command
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="newPresetModal" class="modal-backdrop hidden">
+    <div class="modal-frame" style="max-width: 720px;">
+      <div class="modal-top">
+        <div>
+          <div style="font-size: 14px; font-weight: 700;">Create / Update ZTP Preset</div>
+          <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">GenieACS preset format · JSON</div>
+        </div>
+        <button onclick="closeNewPresetModal()" class="btn btn-secondary btn-sm" style="padding: 4px 8px;">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Preset Name (_id)</label>
+          <input type="text" id="presetId" class="form-control" placeholder="e.g. syrotech_default" required>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">
+            Unique identifier; the same name overwrites an existing preset.
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preset Definition (JSON)</label>
+          <textarea id="presetJson" class="preset-textarea" placeholder='{
+  "events": { "0 BOOTSTRAP": true, "1 BOOT": true, "2 PERIODIC": true },
+  "precondition": {},
+  "configurations": [
+    { "type": "setParameterValues", "name": "wan-config", "parameterValues": [["Device.IP.Interface.1.IPv4Address.1.IPAddress", "10.0.0.1"]] }
+  ]
+}'></textarea>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">
+            Edit JSON directly. Common types: setParameterValues, getParameterValues, refreshObject, reboot, download.
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="savePreset()" class="btn btn-primary" style="flex: 1;">
+            <i class="ph-bold ph-floppy-disk"></i> Save Preset
+          </button>
+          <button onclick="closeNewPresetModal()" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
   <script>
+    // ============ STATE ============
     let authToken = localStorage.getItem('flexeree_token') || null;
     let currentUser = null;
     let allDevices = [];
     let selectedDevice = null;
 
+    // pagination state per view
+    const devState = { page: 1, pageSize: 50, total: 0, lastData: null };
+    const audState = { page: 1, pageSize: 100, total: 0, lastData: null };
+    const usrState = { page: 1, pageSize: 50, total: 0, lastData: null };
+
+    let availableTags = [];
+    let availableModels = [];
+    let wifiPasswordReveal = {};
+
+    // ============ INIT ============
     window.addEventListener('DOMContentLoaded', () => {
-      if (authToken) {
-        verifyToken();
-      } else {
-        showLogin();
-      }
+      if (authToken) verifyToken();
+      else showLogin();
     });
 
+    // ============ HTTP HELPERS ============
     async function apiRequest(endpoint, method = 'GET', body = null) {
       const headers = { 'Content-Type': 'application/json' };
       if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
-
       const opts = { method, headers };
       if (body) opts.body = JSON.stringify(body);
-
       const res = await fetch('/api' + endpoint, opts);
-      if (res.status === 401) {
-        logout();
-        throw new Error('Session expired');
+      if (res.status === 401) { logout(); throw new Error('Session expired'); }
+      if (!res.ok) {
+        let msg = 'Request failed';
+        try { const j = await res.json(); msg = j.error || msg; } catch {}
+        throw new Error(msg);
       }
       return res.json();
     }
 
+    function apiDownloadUrl(endpoint, params) {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+      return '/api' + endpoint + qs;
+    }
+    function downloadFile(url, filename) {
+      fetch(url, { headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(r => { if (!r.ok) throw new Error('Download failed'); return r.blob(); })
+        .then(blob => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          showToast('Download started: ' + filename, 'success');
+        })
+        .catch(err => showToast(err.message, 'error'));
+    }
+
+    // ============ TOAST ============
+    function showToast(message, type = 'info', duration = 4000) {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const t = document.createElement('div');
+      t.className = 'toast ' + type;
+      t.innerText = message;
+      container.appendChild(t);
+      setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => t.remove(), 300);
+      }, duration);
+    }
+
+    // ============ MOBILE MENU ============
+    function toggleMobileMenu() {
+      document.getElementById('mainSidebar').classList.toggle('open');
+    }
+    function closeMobileMenu() {
+      document.getElementById('mainSidebar').classList.remove('open');
+    }
+
+    // ============ AUTH ============
     async function verifyToken() {
       try {
         const data = await apiRequest('/auth/me');
@@ -1285,7 +1868,8 @@
       document.getElementById('userHeaderControls').classList.add('hidden');
       document.getElementById('mainSidebar').classList.add('hidden');
       ['dashboard', 'devices', 'presets', 'audit', 'users'].forEach(v => {
-        document.getElementById('view-' + v).classList.add('hidden');
+        const el = document.getElementById('view-' + v);
+        if (el) el.classList.add('hidden');
       });
       document.getElementById('view-login').classList.remove('hidden');
     }
@@ -1295,7 +1879,6 @@
       const u = document.getElementById('loginUsername').value;
       const p = document.getElementById('loginPassword').value;
       const errBox = document.getElementById('loginError');
-
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
@@ -1304,7 +1887,6 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Login failed');
-
         authToken = data.token;
         localStorage.setItem('flexeree_token', authToken);
         currentUser = data.user;
@@ -1324,6 +1906,7 @@
       showLogin();
     }
 
+    // ============ NAVIGATION ============
     function navigate(view) {
       const views = ['login', 'dashboard', 'devices', 'presets', 'audit', 'users'];
       views.forEach(v => {
@@ -1332,11 +1915,11 @@
         const btn = document.getElementById('nav-' + v);
         if (btn) btn.classList.remove('active');
       });
-
       const activeEl = document.getElementById('view-' + view);
       if (activeEl) activeEl.classList.remove('hidden');
       const activeBtn = document.getElementById('nav-' + view);
       if (activeBtn) activeBtn.classList.add('active');
+      closeMobileMenu();
 
       if (view === 'dashboard') loadDashboard();
       if (view === 'devices') loadDevices();
@@ -1345,6 +1928,7 @@
       if (view === 'users') loadUsers();
     }
 
+    // ============ DASHBOARD ============
     async function loadDashboard() {
       try {
         const data = await apiRequest('/dashboard/stats');
@@ -1357,10 +1941,10 @@
           list.innerHTML = data.recentEvents.map(e => `
             <tr>
               <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${new Date(e.timestamp).toLocaleTimeString()}</td>
-              <td style="font-weight: 700; color: var(--text-primary);">${e.action}</td>
-              <td style="color: var(--cyan-400);">${e.user}</td>
-              <td style="font-family: var(--font-mono);">${e.target || '-'}</td>
-              <td style="color: var(--text-secondary);">${e.details || ''}</td>
+              <td style="font-weight: 700; color: var(--text-primary);">${escapeHtml(e.action)}</td>
+              <td style="color: var(--cyan-400);">${escapeHtml(e.user)}</td>
+              <td style="font-family: var(--font-mono);">${escapeHtml(e.target) || '-'}</td>
+              <td style="color: var(--text-secondary);">${escapeHtml(e.details) || ''}</td>
             </tr>
           `).join('');
         } else {
@@ -1371,102 +1955,160 @@
       }
     }
 
+    // ============ DEVICES ============
+    let devicesReqToken = 0;
     async function loadDevices() {
+      const myToken = ++devicesReqToken;
       try {
-        const data = await apiRequest('/devices');
+        const params = {
+          page: devState.page,
+          pageSize: devState.pageSize,
+          query: document.getElementById('deviceSearchInput').value || '',
+          online: document.getElementById('deviceStatusFilter').value || '',
+          model: document.getElementById('deviceModelFilter').value || '',
+          tag: document.getElementById('deviceTagFilter').value || ''
+        };
+        const data = await apiRequest('/devices?' + new URLSearchParams(params).toString());
+        if (myToken !== devicesReqToken) return; // stale response
+
         allDevices = data.devices || [];
+        devState.total = data.total || 0;
         renderDevicesTable(allDevices);
+        renderPagination('devicesPagination', 'devices', devState);
+        document.getElementById('devicesCountLabel').innerText = `${devState.total} devices · page ${devState.page}/${Math.max(1, Math.ceil(devState.total / devState.pageSize))}`;
+        populateDeviceFilters(data.devices);
       } catch (err) {
-        console.error(err);
+        showToast('Failed to load devices: ' + err.message, 'error');
       }
+    }
+
+    function populateDeviceFilters(devices) {
+      // Build models and tags from current page set + all loaded devices (cumulative)
+      const modelsSeen = new Set(availableModels);
+      const tagsSeen = new Set(availableTags);
+      devices.forEach(d => {
+        if (d.productClass) modelsSeen.add(d.productClass);
+        (d.tags || []).forEach(t => tagsSeen.add(t));
+      });
+      availableModels = Array.from(modelsSeen).sort();
+      availableTags = Array.from(tagsSeen).sort();
+
+      const modelSelect = document.getElementById('deviceModelFilter');
+      const tagSelect = document.getElementById('deviceTagFilter');
+      const curModel = modelSelect.value;
+      const curTag = tagSelect.value;
+
+      modelSelect.innerHTML = '<option value="">All Models</option>' +
+        availableModels.map(m => `<option value="${escapeAttr(m)}" ${m === curModel ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('');
+      tagSelect.innerHTML = '<option value="">All Tags</option>' +
+        availableTags.map(t => `<option value="${escapeAttr(t)}" ${t === curTag ? 'selected' : ''}>${escapeHtml(t)}</option>`).join('');
+    }
+
+    function onDeviceFilterChange() {
+      devState.page = 1;
+      loadDevices();
     }
 
     function renderDevicesTable(devices) {
       const tbody = document.getElementById('devicesTableBody');
       if (!devices.length) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">No ONT devices registered yet. Connect a Syrotech ONT to port 7547.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">No ONT devices match your filters.</td></tr>';
         return;
       }
-
       tbody.innerHTML = devices.map(d => {
         const isOnline = d.isOnline;
         let rxDisplay = '<span style="color: var(--text-muted);">-</span>';
         if (d.rxPower) {
           const val = parseFloat(d.rxPower);
           const color = (val >= -27 && val <= -8) ? 'var(--emerald-500)' : 'var(--rose-500)';
-          rxDisplay = `<span style="color: ${color}; font-weight: 600;">${d.rxPower} dBm</span>`;
+          rxDisplay = `<span style="color: ${color}; font-weight: 600;">${escapeHtml(d.rxPower)} dBm</span>`;
         }
-
         return `
           <tr>
+            <td><input type="checkbox" class="row-checkbox dev-row-cb" value="${escapeAttr(d.id)}"></td>
             <td>
               <span class="status-badge ${isOnline ? 'online' : 'offline'}">
                 <span class="status-indicator-dot"></span>
                 ${isOnline ? 'ONLINE' : 'OFFLINE'}
               </span>
             </td>
-            <td style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);">${d.serialNumber}</td>
+            <td style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);">${escapeHtml(d.serialNumber)}</td>
             <td>
-              <div style="font-weight: 600; color: var(--text-primary);">${d.productClass}</div>
-              <div style="font-size: 10px; color: var(--text-muted);">${d.manufacturer} · FW: ${d.softwareVersion}</div>
+              <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(d.productClass)}</div>
+              <div style="font-size: 10px; color: var(--text-muted);">${escapeHtml(d.manufacturer)} · FW: ${escapeHtml(d.softwareVersion)}</div>
             </td>
             <td>
-              <div style="font-family: var(--font-mono); color: var(--text-primary);">${d.wanIp || 'Dynamic / No IP'}</div>
-              <div style="font-size: 10px; color: var(--text-muted);">${d.pppoeUser || 'PPPoE Not Configured'}</div>
+              <div style="font-family: var(--font-mono); color: var(--text-primary);">${escapeHtml(d.wanIp) || 'Dynamic / No IP'}</div>
+              <div style="font-size: 10px; color: var(--text-muted);">${escapeHtml(d.pppoeUser) || 'PPPoE Not Configured'}</div>
             </td>
             <td style="font-family: var(--font-mono);">${rxDisplay}</td>
             <td>
               <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                ${(d.tags || []).map(t => `<span class="tag-pill">${t}</span>`).join('')}
+                ${(d.tags || []).map(t => `<span class="tag-pill">${escapeHtml(t)}</span>`).join('')}
               </div>
             </td>
             <td style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">
-              ${d.lastInform ? new Date(d.lastInform).toLocaleTimeString() : 'Never'}
+              ${d.lastInform ? new Date(d.lastInform).toLocaleString() : 'Never'}
             </td>
             <td style="text-align: right;">
-              <button onclick="openDeviceDetail('${d.id}')" class="btn btn-secondary btn-sm">
+              <button onclick="openDeviceDetail('${escapeAttr(d.id)}')" class="btn btn-secondary btn-sm">
                 Manage <i class="ph-bold ph-caret-right"></i>
               </button>
             </td>
           </tr>
         `;
       }).join('');
+      // Restore select-all unchecked when table reloads
+      const sa = document.getElementById('deviceSelectAll');
+      if (sa) sa.checked = false;
     }
 
-    function filterDevices() {
-      const q = document.getElementById('deviceSearchInput').value.toLowerCase();
-      const filtered = allDevices.filter(d =>
-        d.serialNumber.toLowerCase().includes(q) ||
-        d.productClass.toLowerCase().includes(q) ||
-        d.manufacturer.toLowerCase().includes(q) ||
-        (d.wanIp && d.wanIp.toLowerCase().includes(q)) ||
-        (d.tags && d.tags.some(t => t.toLowerCase().includes(q)))
-      );
-      renderDevicesTable(filtered);
+    function toggleSelectAllDevices(cb) {
+      document.querySelectorAll('.dev-row-cb').forEach(c => { c.checked = cb.checked; });
+    }
+    function getSelectedDeviceIds() {
+      return Array.from(document.querySelectorAll('.dev-row-cb:checked')).map(c => c.value);
     }
 
+    function exportDevices(fmt) {
+      downloadFile(apiDownloadUrl('/devices/export', { fmt }), 'devices.' + (fmt === 'xlsx' ? 'xls' : 'csv'));
+    }
+
+    // ============ DEVICE DETAIL ============
     async function openDeviceDetail(id) {
       selectedDevice = allDevices.find(d => d.id === id);
       if (!selectedDevice) return;
-
-      document.getElementById('modalDeviceTitle').innerText = `${selectedDevice.productClass} · ${selectedDevice.serialNumber}`;
-      document.getElementById('modalDeviceSubtitle').innerText = `SYSTEM ID: ${selectedDevice.id} | WAN IP: ${selectedDevice.wanIp || 'N/A'}`;
-
-      document.getElementById('modalManufacturer').innerText = selectedDevice.manufacturer;
-      document.getElementById('modalProductClass').innerText = selectedDevice.productClass;
-      document.getElementById('modalSerial').innerText = selectedDevice.serialNumber;
-      document.getElementById('modalHwVer').innerText = selectedDevice.hardwareVersion;
-      document.getElementById('modalSwVer').innerText = selectedDevice.softwareVersion;
-      document.getElementById('modalLastInform').innerText = selectedDevice.lastInform ? new Date(selectedDevice.lastInform).toLocaleString() : 'N/A';
-
-      const rxVal = selectedDevice.rxPower ? `${selectedDevice.rxPower} dBm` : 'N/A';
-      document.getElementById('modalRxPower').innerText = rxVal;
-      const txVal = selectedDevice.txPower ? `${selectedDevice.txPower} dBm` : 'N/A';
-      document.getElementById('modalTxPower').innerText = txVal;
-
-      renderModalTags();
+      populateDeviceDetail(selectedDevice);
       switchTab('overview');
       document.getElementById('deviceModal').classList.remove('hidden');
+    }
+
+    async function populateDeviceDetail(d) {
+      document.getElementById('modalDeviceTitle').innerText = `${d.productClass} · ${d.serialNumber}`;
+      document.getElementById('modalDeviceSubtitle').innerText = `SYSTEM ID: ${d.id} | WAN IP: ${d.wanIp || 'N/A'}`;
+      document.getElementById('modalManufacturer').innerText = d.manufacturer;
+      document.getElementById('modalProductClass').innerText = d.productClass;
+      document.getElementById('modalSerial').innerText = d.serialNumber;
+      document.getElementById('modalHwVer').innerText = d.hardwareVersion || '-';
+      document.getElementById('modalSwVer').innerText = d.softwareVersion || '-';
+      document.getElementById('modalLastInform').innerText = d.lastInform ? new Date(d.lastInform).toLocaleString() : 'N/A';
+
+      const rx = parseFloat(d.rxPower);
+      const tx = parseFloat(d.txPower);
+      document.getElementById('modalRxPower').innerText = isNaN(rx) ? 'N/A' : `${rx} dBm`;
+      document.getElementById('modalRxBar').className = 'gauge-bar ' + (isNaN(rx) ? '' : (rx >= -27 && rx <= -8 ? 'good' : 'bad'));
+      document.getElementById('modalRxBar').style.width = isNaN(rx) ? '0%' : Math.min(100, Math.max(0, ((rx + 35) * 100 / 27))) + '%';
+      document.getElementById('modalRxStatus').innerText = isNaN(rx) ? 'No reading' : (rx >= -27 && rx <= -8 ? 'Normal Optical Signal' : 'Critical Signal');
+      document.getElementById('modalRxStatus').style.color = isNaN(rx) ? 'var(--text-muted)' : (rx >= -27 && rx <= -8 ? 'var(--emerald-500)' : 'var(--rose-500)');
+
+      document.getElementById('modalTxPower').innerText = isNaN(tx) ? 'N/A' : `${tx} dBm`;
+      document.getElementById('modalTxBar').className = 'gauge-bar ' + (isNaN(tx) ? '' : (tx >= 0.5 && tx <= 5 ? 'good' : 'bad'));
+      document.getElementById('modalTxBar').style.width = isNaN(tx) ? '0%' : Math.min(100, Math.max(0, (tx / 5) * 100)) + '%';
+      document.getElementById('modalTxStatus').innerText = isNaN(tx) ? 'No reading' : (tx >= 0.5 && tx <= 5 ? 'Normal Transmit Power' : 'Critical TX');
+      document.getElementById('modalTxStatus').style.color = isNaN(tx) ? 'var(--text-muted)' : (tx >= 0.5 && tx <= 5 ? 'var(--cyan-400)' : 'var(--rose-500)');
+
+      renderModalTags();
+      renderWifiReadback(d);
     }
 
     function closeDeviceModal() {
@@ -1475,17 +2117,22 @@
     }
 
     function switchTab(tab) {
-      ['overview', 'wan', 'wifi', 'actions', 'diag'].forEach(t => {
+      ['overview', 'wan', 'wifi', 'firmware', 'actions', 'diag'].forEach(t => {
         const content = document.getElementById('tabContent-' + t);
         const btn = document.getElementById('tabBtn-' + t);
         if (content) content.classList.add('hidden');
         if (btn) btn.classList.remove('active');
       });
-
       const activeContent = document.getElementById('tabContent-' + tab);
       const activeBtn = document.getElementById('tabBtn-' + tab);
       if (activeContent) activeContent.classList.remove('hidden');
       if (activeBtn) activeBtn.classList.add('active');
+
+      if (tab === 'firmware' && selectedDevice) {
+        document.getElementById('firmwareSelectedFile').value = '';
+        document.getElementById('firmwarePushStatus').innerText = '';
+        loadFirmwareFiles();
+      }
     }
 
     function renderModalTags() {
@@ -1496,8 +2143,8 @@
       }
       container.innerHTML = selectedDevice.tags.map(t => `
         <span class="tag-pill">
-          ${t}
-          <span onclick="removeDeviceTag('${t}')" class="remove-tag-btn">×</span>
+          ${escapeHtml(t)}
+          <span onclick="removeDeviceTag('${escapeAttr(t)}')" class="remove-tag-btn">×</span>
         </span>
       `).join('');
     }
@@ -1506,18 +2153,24 @@
       const input = document.getElementById('newTagInput');
       const tag = input.value.trim();
       if (!tag || !selectedDevice) return;
-
-      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/tags', 'POST', { tag, action: 'add' });
-      selectedDevice.tags.push(tag);
-      renderModalTags();
-      input.value = '';
+      try {
+        await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/tags', 'POST', { tag, action: 'add' });
+        selectedDevice.tags = selectedDevice.tags || [];
+        if (!selectedDevice.tags.includes(tag)) selectedDevice.tags.push(tag);
+        renderModalTags();
+        input.value = '';
+        showToast('Tag added: ' + tag, 'success');
+      } catch (e) { showToast('Failed to add tag: ' + e.message, 'error'); }
     }
 
     async function removeDeviceTag(tag) {
       if (!selectedDevice) return;
-      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/tags', 'POST', { tag, action: 'remove' });
-      selectedDevice.tags = selectedDevice.tags.filter(t => t !== tag);
-      renderModalTags();
+      try {
+        await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/tags', 'POST', { tag, action: 'remove' });
+        selectedDevice.tags = (selectedDevice.tags || []).filter(t => t !== tag);
+        renderModalTags();
+        showToast('Tag removed: ' + tag, 'success');
+      } catch (e) { showToast('Failed to remove tag: ' + e.message, 'error'); }
     }
 
     async function saveWanConfig() {
@@ -1530,33 +2183,132 @@
         dns1: document.getElementById('wanDns1').value,
         dns2: document.getElementById('wanDns2').value
       };
-      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/wan-config', 'POST', body);
-      alert('Carrier WAN provisioning command dispatched via TR-069!');
+      try {
+        await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/wan-config', 'POST', body);
+        showToast('Carrier WAN provisioning command dispatched via TR-069!', 'success');
+      } catch (e) { showToast('WAN config failed: ' + e.message, 'error'); }
     }
 
     async function saveWifiConfig(radio) {
       if (!selectedDevice) return;
       const is5g = radio === '2';
+      const channelEl = document.getElementById(is5g ? 'wifi5Channel' : 'wifi24Channel');
       const body = {
         radio,
         ssid: document.getElementById(is5g ? 'wifi5Ssid' : 'wifi24Ssid').value,
         password: document.getElementById(is5g ? 'wifi5Pass' : 'wifi24Pass').value,
-        enabled: document.getElementById(is5g ? 'wifi5Enabled' : 'wifi24Enabled').checked
+        enabled: document.getElementById(is5g ? 'wifi5Enabled' : 'wifi24Enabled').checked,
+        channel: channelEl ? channelEl.value : ''
       };
-      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/wifi-config', 'POST', body);
-      alert(`Wi-Fi Radio ${is5g ? '5G' : '2.4G'} parameter task successfully queued!`);
+      try {
+        await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/wifi-config', 'POST', body);
+        showToast(`Wi-Fi Radio ${is5g ? '5G' : '2.4G'} parameter task queued!`, 'success');
+        // Refresh readback after a short delay so ONT can inform
+        setTimeout(() => refreshWifiReadback(), 2000);
+      } catch (e) { showToast('Wi-Fi config failed: ' + e.message, 'error'); }
     }
 
+    // ============ WIFI READBACK ============
+    function renderWifiReadback(d) {
+      const container = document.getElementById('wifiReadbackContainer');
+      const readback = d.wifiReadback || [];
+      if (!readback.length) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 11px;">No Wi-Fi interfaces detected yet. Click "Refresh Object Tree" in Remote Actions first.</div>';
+        return;
+      }
+      container.innerHTML = readback.map(w => {
+        const revealKey = d.id + '|' + w.radio;
+        const revealed = !!wifiPasswordReveal[revealKey];
+        const passDisplay = !w.password
+          ? '<span class="wifi-readback-value muted">— not configured —</span>'
+          : (revealed
+              ? `<span class="wifi-readback-value">${escapeHtml(w.password)}</span>
+                 <span class="password-toggle" onclick="toggleWifiPassword('${escapeAttr(revealKey)}')">hide</span>`
+              : `<span class="wifi-readback-value">••••••••</span>
+                 <span class="password-toggle" onclick="toggleWifiPassword('${escapeAttr(revealKey)}')">show</span>`);
+        return `
+          <div class="wifi-readback-card">
+            <div style="font-weight: 700; color: var(--text-primary); font-size: 12px; margin-bottom: 6px;">
+              Radio ${escapeHtml(w.radio)}
+              <span style="font-family: var(--font-mono); color: ${w.enabled ? 'var(--emerald-500)' : 'var(--text-muted)'}; font-size: 10px; margin-left: 6px;">
+                ${w.enabled ? 'ENABLED' : 'DISABLED'}
+              </span>
+            </div>
+            <div class="wifi-readback-row">
+              <span class="wifi-readback-label">SSID</span>
+              <span class="wifi-readback-value">${escapeHtml(w.ssid) || '<span class="muted">— empty —</span>'}</span>
+            </div>
+            <div class="wifi-readback-row">
+              <span class="wifi-readback-label">Password</span>
+              <span>${passDisplay}</span>
+            </div>
+            <div class="wifi-readback-row">
+              <span class="wifi-readback-label">Channel</span>
+              <span class="wifi-readback-value">${escapeHtml(String(w.channel)) || 'auto'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleWifiPassword(key) {
+      wifiPasswordReveal[key] = !wifiPasswordReveal[key];
+      if (selectedDevice) renderWifiReadback(selectedDevice);
+    }
+
+    async function refreshWifiReadback() {
+      if (!selectedDevice) return;
+      showToast('Triggering refresh for fresh Wi-Fi data...', 'info');
+      try {
+        await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/refresh', 'POST');
+        // Re-fetch device detail to pick up new readback
+        const fresh = await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id));
+        if (fresh && fresh.device) {
+          const igd = fresh.device.InternetGatewayDevice || fresh.device.Device;
+          const wifiReadback = [];
+          const wlanBase = igd && igd.LANDevice && igd.LANDevice['1'] && igd.LANDevice['1'].WLANConfiguration;
+          if (wlanBase) {
+            for (const k of Object.keys(wlanBase)) {
+              if (k.startsWith('_')) continue;
+              const w = wlanBase[k];
+              wifiReadback.push({
+                radio: k,
+                ssid: w.SSID && w.SSID._value,
+                password: w.PreSharedKey && w.PreSharedKey['1'] && w.PreSharedKey['1'].KeyPassphrase && w.PreSharedKey['1'].KeyPassphrase._value,
+                enabled: w.Enable && w.Enable._value,
+                channel: w.Channel && w.Channel._value
+              });
+            }
+          }
+          selectedDevice.wifiReadback = wifiReadback;
+          // also pre-fill input fields with current values
+          const w24 = wifiReadback.find(w => w.radio === '1');
+          const w5 = wifiReadback.find(w => w.radio === '2');
+          if (w24) {
+            document.getElementById('wifi24Ssid').value = w24.ssid || '';
+            document.getElementById('wifi24Enabled').checked = !!w24.enabled;
+          }
+          if (w5) {
+            document.getElementById('wifi5Ssid').value = w5.ssid || '';
+            document.getElementById('wifi5Enabled').checked = !!w5.enabled;
+          }
+          renderWifiReadback(selectedDevice);
+          showToast('Wi-Fi readback refreshed.', 'success');
+        }
+      } catch (e) { showToast('Refresh failed: ' + e.message, 'error'); }
+    }
+
+    // ============ DEVICE ACTIONS ============
     async function deviceAction(action) {
       if (!selectedDevice) return;
       if (action === 'reboot' && !confirm('WARNING: Confirm reboot dispatch to subscriber ONT?')) return;
       if (action === 'factoryReset' && !confirm('CRITICAL ACTION: This will completely wipe the ONT to factory defaults. Proceed?')) return;
-
-      if (action === 'refresh') await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/refresh', 'POST');
-      if (action === 'reboot') await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/reboot', 'POST');
-      if (action === 'factoryReset') await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/factory-reset', 'POST');
-
-      alert(`Command [${action}] queued for ONT connection handshake.`);
+      try {
+        if (action === 'refresh') await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/refresh', 'POST');
+        if (action === 'reboot') await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/reboot', 'POST');
+        if (action === 'factoryReset') await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/factory-reset', 'POST');
+        showToast(`Command [${action}] queued for ONT.`, 'success');
+      } catch (e) { showToast('Action failed: ' + e.message, 'error'); }
     }
 
     async function runDiagnostics() {
@@ -1564,101 +2316,385 @@
       const type = document.getElementById('diagType').value;
       const host = document.getElementById('diagHost').value;
       const outBox = document.getElementById('diagOutput');
-
-      outBox.innerText = `Dispatching ${type} test to ${host} on ONT... Waiting for inform cycle...`;
+      outBox.innerText = `Dispatching ${type} test to ${host}...`;
       outBox.classList.remove('hidden');
-
-      await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/diagnostics', 'POST', { type, host });
-      outBox.innerText = `Diagnostic task [${type}] queued. Results will be gathered upon ONT Inform handshake.`;
+      try {
+        await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/diagnostics', 'POST', { type, host });
+        outBox.innerText = `Diagnostic task [${type}] queued. Results gathered on next Inform.`;
+      } catch (e) {
+        outBox.innerText = 'Failed: ' + e.message;
+      }
     }
 
+    // ============ FIRMWARE ============
+    async function loadFirmwareFiles() {
+      const list = document.getElementById('firmwareFilesList');
+      list.innerHTML = '<div style="padding: 12px; text-align: center;"><span class="spinner"></span> Loading firmware files...</div>';
+      try {
+        const data = await apiRequest('/firmware-files');
+        const files = data && (data.files || data) || [];
+        if (!Array.isArray(files) || !files.length) {
+          list.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 11px;">No firmware files on ACS filesystem yet.</div>';
+          return;
+        }
+        list.innerHTML = files.map(f => `
+          <div class="fw-list-item" onclick="selectFirmwareFile(this, '${escapeAttr(typeof f === 'string' ? f : (f._id || f.name || f.filename))}')">
+            <span><i class="ph-bold ph-file"></i> ${escapeHtml(typeof f === 'string' ? f : (f._id || f.name || f.filename))}</span>
+          </div>
+        `).join('');
+      } catch (e) {
+        list.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--rose-500); font-size: 11px;">Failed: ' + e.message + '</div>';
+      }
+    }
+
+    function selectFirmwareFile(el, name) {
+      document.querySelectorAll('.fw-list-item.selected').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('firmwareSelectedFile').value = name;
+    }
+
+    async function uploadFirmware() {
+      const input = document.getElementById('firmwareFileInput');
+      const status = document.getElementById('firmwareUploadStatus');
+      if (!input.files.length) { showToast('Choose a firmware file first.', 'warning'); return; }
+      const file = input.files[0];
+      status.innerHTML = '<span class="spinner"></span> Uploading ' + escapeHtml(file.name) + '...';
+      try {
+        const res = await fetch('/api/firmware-files/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + authToken,
+            'Content-Type': 'application/octet-stream',
+            'X-Filename': file.name
+          },
+          body: file
+        });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error(j.error || 'HTTP ' + res.status);
+        }
+        const j = await res.json();
+        status.innerHTML = '<span style="color: var(--emerald-500);">Uploaded: ' + escapeHtml(file.name) + '</span>';
+        showToast('Firmware uploaded to ACS FS.', 'success');
+        loadFirmwareFiles();
+      } catch (e) {
+        status.innerHTML = '<span style="color: var(--rose-500);">' + escapeHtml(e.message) + '</span>';
+        showToast('Upload failed: ' + e.message, 'error');
+      }
+    }
+
+    async function pushFirmwareUpgrade() {
+      if (!selectedDevice) return;
+      const fileName = document.getElementById('firmwareSelectedFile').value.trim();
+      if (!fileName) { showToast('Pick a firmware file first.', 'warning'); return; }
+      if (!confirm(`Confirm firmware upgrade with file "${fileName}"? This will trigger a download on the ONT.`)) return;
+      const status = document.getElementById('firmwarePushStatus');
+      status.innerHTML = '<span class="spinner"></span> Dispatching download task...';
+      try {
+        await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/firmware-upgrade', 'POST', { fileName });
+        status.innerHTML = '<span style="color: var(--emerald-500);">Download task queued. ONT will fetch and reboot.</span>';
+        showToast('Firmware upgrade dispatched.', 'success');
+      } catch (e) {
+        status.innerHTML = '<span style="color: var(--rose-500);">' + escapeHtml(e.message) + '</span>';
+        showToast('Firmware push failed: ' + e.message, 'error');
+      }
+    }
+
+    // ============ PRESETS ============
     async function loadPresets() {
-      const data = await apiRequest('/presets');
       const list = document.getElementById('presetsList');
-      if (!data.presets || !data.presets.length) {
-        list.innerHTML = '<div style="grid-column: span 2; padding: 24px; text-align: center; color: var(--text-muted);">No ZTP presets active. Define rules for auto-provisioning Syrotech ONTs.</div>';
-        return;
+      try {
+        const data = await apiRequest('/presets');
+        const presets = data.presets || [];
+        if (!presets.length) {
+          list.innerHTML = '<div style="grid-column: span 2; padding: 24px; text-align: center; color: var(--text-muted);">No ZTP presets active. Click "New Preset" to define rules.</div>';
+          return;
+        }
+        list.innerHTML = presets.map(p => `
+          <div class="panel" style="margin-bottom: 0; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">${escapeHtml(p._id)}</div>
+              <div style="display: flex; gap: 4px;">
+                <button onclick="editPreset('${escapeAttr(p._id)}')" class="btn btn-secondary btn-sm"><i class="ph-bold ph-pencil"></i></button>
+                <button onclick="deletePreset('${escapeAttr(p._id)}')" class="btn btn-danger btn-sm"><i class="ph-bold ph-trash"></i></button>
+              </div>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+              Events: ${p.events ? Object.keys(p.events).join(', ') : 'Any'}
+            </div>
+            <div style="font-size: 11px; color: var(--cyan-400); font-family: var(--font-mono);">
+              Configurations: ${(p.configurations || []).length}
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        list.innerHTML = '<div style="grid-column: span 2; padding: 24px; text-align: center; color: var(--rose-500);">Failed: ' + e.message + '</div>';
       }
-      list.innerHTML = data.presets.map(p => `
-        <div class="panel" style="margin-bottom: 0; padding: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">${p._id}</div>
-            <span class="brand-badge">ZTP RULE</span>
-          </div>
-          <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
-            Events: ${p.events ? Object.keys(p.events).join(', ') : 'Any'}
-          </div>
-          <div style="font-size: 11px; color: var(--cyan-400); font-family: var(--font-mono);">
-            Condition: ${p.precondition || 'None (All ONTs)'}
-          </div>
-        </div>
-      `).join('');
     }
 
+    function openNewPresetModal() {
+      document.getElementById('presetId').value = '';
+      document.getElementById('presetJson').value = JSON.stringify({
+        events: { '0 BOOTSTRAP': true, '1 BOOT': true, '2 PERIODIC': true },
+        precondition: {},
+        configurations: []
+      }, null, 2);
+      document.getElementById('newPresetModal').classList.remove('hidden');
+    }
+    function closeNewPresetModal() { document.getElementById('newPresetModal').classList.add('hidden'); }
+
+    async function editPreset(id) {
+      try {
+        const data = await apiRequest('/presets');
+        const p = (data.presets || []).find(x => x._id === id);
+        if (!p) return;
+        document.getElementById('presetId').value = p._id;
+        document.getElementById('presetJson').value = JSON.stringify(p, null, 2);
+        document.getElementById('newPresetModal').classList.remove('hidden');
+      } catch (e) { showToast('Failed to load preset: ' + e.message, 'error'); }
+    }
+
+    async function savePreset() {
+      const id = document.getElementById('presetId').value.trim();
+      if (!id) { showToast('Preset name required.', 'warning'); return; }
+      let preset;
+      try { preset = JSON.parse(document.getElementById('presetJson').value); }
+      catch (e) { showToast('Invalid JSON: ' + e.message, 'error'); return; }
+      preset._id = id;
+      try {
+        await apiRequest('/presets', 'POST', preset);
+        showToast('Preset saved: ' + id, 'success');
+        closeNewPresetModal();
+        loadPresets();
+      } catch (e) { showToast('Failed: ' + e.message, 'error'); }
+    }
+
+    async function deletePreset(id) {
+      if (!confirm('Delete preset "' + id + '"?')) return;
+      try {
+        await apiRequest('/presets/' + encodeURIComponent(id), 'DELETE');
+        showToast('Preset deleted.', 'success');
+        loadPresets();
+      } catch (e) { showToast('Failed: ' + e.message, 'error'); }
+    }
+
+    // ============ AUDIT ============
+    let auditReqToken = 0;
     async function loadAudit() {
-      const data = await apiRequest('/audit-logs');
-      const tbody = document.getElementById('auditTableBody');
-      if (!data.logs || !data.logs.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">No audit records found.</td></tr>';
-        return;
-      }
-      tbody.innerHTML = data.logs.map(l => `
-        <tr>
-          <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${new Date(l.timestamp).toLocaleString()}</td>
-          <td style="font-weight: 600; color: var(--text-primary);">${l.user}</td>
-          <td><span class="tag-pill" style="color: var(--cyan-400);">${l.role}</span></td>
-          <td style="font-weight: 700; color: var(--text-primary);">${l.action}</td>
-          <td style="font-family: var(--font-mono);">${l.target || '-'}</td>
-          <td style="color: var(--text-secondary); font-size: 11px;">${l.details || ''}</td>
-        </tr>
-      `).join('');
+      const myToken = ++auditReqToken;
+      try {
+        const params = {
+          page: audState.page,
+          pageSize: audState.pageSize,
+          user: document.getElementById('auditUserInput').value || '',
+          action: document.getElementById('auditActionInput').value || '',
+          from: document.getElementById('auditFromDate').value || '',
+          to: document.getElementById('auditToDate').value || ''
+        };
+        const data = await apiRequest('/audit-logs?' + new URLSearchParams(params).toString());
+        if (myToken !== auditReqToken) return;
+        const logs = data.logs || [];
+        audState.total = data.total || 0;
+        const tbody = document.getElementById('auditTableBody');
+        if (!logs.length) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">No audit records match your filters.</td></tr>';
+        } else {
+          tbody.innerHTML = logs.map(l => {
+            const status = l.status || 'SUCCESS';
+            const statusColor = status === 'SUCCESS' ? 'var(--emerald-500)' : (status === 'FAIL' || status === 'ERROR' ? 'var(--rose-500)' : 'var(--amber-500)');
+            return `
+              <tr>
+                <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${new Date(l.timestamp).toLocaleString()}</td>
+                <td style="font-weight: 600; color: var(--text-primary);">${escapeHtml(l.user)}</td>
+                <td><span class="tag-pill" style="color: var(--cyan-400);">${escapeHtml(l.role)}</span></td>
+                <td style="font-weight: 700; color: var(--text-primary);">${escapeHtml(l.action)}</td>
+                <td style="font-family: var(--font-mono);">${escapeHtml(l.target) || '-'}</td>
+                <td style="color: var(--text-secondary); font-size: 11px;">${escapeHtml(l.details) || ''}</td>
+                <td><span class="status-badge ${status === 'SUCCESS' ? 'online' : 'offline'}" style="color: ${statusColor};">${escapeHtml(status)}</span></td>
+              </tr>
+            `;
+          }).join('');
+        }
+        renderPagination('auditPagination', 'audit', audState);
+        document.getElementById('auditCountLabel').innerText = `${audState.total} records · page ${audState.page}/${Math.max(1, Math.ceil(audState.total / audState.pageSize))}`;
+      } catch (e) { showToast('Failed to load audit: ' + e.message, 'error'); }
     }
 
+    function onAuditFilterChange() { audState.page = 1; loadAudit(); }
+
+    function exportAudit(fmt) {
+      downloadFile(apiDownloadUrl('/audit-logs/export', { fmt }), 'audit-log.' + (fmt === 'xlsx' ? 'xls' : 'csv'));
+    }
+
+    async function clearAuditLogs() {
+      const phrase = 'DELETE';
+      const input = prompt('This will permanently delete ALL audit records. Type DELETE in capitals to confirm:');
+      if (input !== phrase) { if (input !== null) showToast('Confirmation phrase did not match.', 'warning'); return; }
+      try {
+        const result = await apiRequest('/audit-logs', 'DELETE');
+        showToast('Cleared ' + result.removed + ' audit records.', 'success');
+        audState.page = 1;
+        loadAudit();
+      } catch (e) { showToast('Clear failed: ' + e.message, 'error'); }
+    }
+
+    // ============ USERS ============
+    let usersReqToken = 0;
     async function loadUsers() {
-      const data = await apiRequest('/users');
-      const tbody = document.getElementById('usersTableBody');
-      if (!data.users || !data.users.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">No staff accounts found.</td></tr>';
-        return;
-      }
-      tbody.innerHTML = data.users.map(u => `
-        <tr>
-          <td style="font-weight: 600; color: var(--text-primary);">${u.fullName || '-'}</td>
-          <td style="font-family: var(--font-mono);">${u.username}</td>
-          <td><span class="tag-pill" style="color: var(--cyan-400);">${u.role}</span></td>
-          <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${new Date(u.createdAt).toLocaleDateString()}</td>
-          <td style="text-align: right;">
-            ${u.username !== 'admin' ? `<button onclick="deleteUser('${u._id}')" class="btn btn-danger btn-sm">Delete</button>` : '<span style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">MASTER</span>'}
-          </td>
-        </tr>
-      `).join('');
+      const myToken = ++usersReqToken;
+      try {
+        const params = { page: usrState.page, pageSize: usrState.pageSize };
+        const data = await apiRequest('/users?' + new URLSearchParams(params));
+        if (myToken !== usersReqToken) return;
+        const users = data.users || [];
+        usrState.total = data.total || 0;
+        const tbody = document.getElementById('usersTableBody');
+        if (!users.length) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">No staff accounts found.</td></tr>';
+        } else {
+          tbody.innerHTML = users.map(u => `
+            <tr>
+              <td style="font-weight: 600; color: var(--text-primary);">${escapeHtml(u.fullName) || '-'}</td>
+              <td style="font-family: var(--font-mono);">${escapeHtml(u.username)}</td>
+              <td><span class="tag-pill" style="color: var(--cyan-400);">${escapeHtml(u.role)}</span></td>
+              <td style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</td>
+              <td style="text-align: right;">
+                ${u.username !== 'admin' ? `<button onclick="deleteUser('${escapeAttr(u._id)}')" class="btn btn-danger btn-sm">Delete</button>` : '<span style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">MASTER</span>'}
+              </td>
+            </tr>
+          `).join('');
+        }
+        renderPagination('usersPagination', 'users', usrState);
+        document.getElementById('usersCountLabel').innerText = `${usrState.total} accounts · page ${usrState.page}/${Math.max(1, Math.ceil(usrState.total / usrState.pageSize))}`;
+      } catch (e) { showToast('Failed to load users: ' + e.message, 'error'); }
     }
+    function onUsersFilterChange() { usrState.page = 1; loadUsers(); }
 
-    function openNewUserModal() {
-      document.getElementById('addUserModal').classList.remove('hidden');
-    }
-
-    function closeAddUserModal() {
-      document.getElementById('addUserModal').classList.add('hidden');
-    }
+    function openNewUserModal() { document.getElementById('addUserModal').classList.remove('hidden'); }
+    function closeAddUserModal() { document.getElementById('addUserModal').classList.add('hidden'); }
 
     async function handleCreateUser(e) {
       e.preventDefault();
-      const body = {
-        fullName: document.getElementById('newFullName').value,
-        username: document.getElementById('newUsername').value,
-        password: document.getElementById('newPassword').value,
-        role: document.getElementById('newRole').value
-      };
-      await apiRequest('/users', 'POST', body);
-      closeAddUserModal();
-      loadUsers();
+      try {
+        const body = {
+          fullName: document.getElementById('newFullName').value,
+          username: document.getElementById('newUsername').value,
+          password: document.getElementById('newPassword').value,
+          role: document.getElementById('newRole').value
+        };
+        await apiRequest('/users', 'POST', body);
+        closeAddUserModal();
+        loadUsers();
+        showToast('Staff account created.', 'success');
+        e.target.reset();
+      } catch (err) { showToast('Create failed: ' + err.message, 'error'); }
     }
 
     async function deleteUser(id) {
       if (!confirm('Confirm deletion of operator account?')) return;
-      await apiRequest('/users/' + id, 'DELETE');
-      loadUsers();
+      try {
+        await apiRequest('/users/' + id, 'DELETE');
+        loadUsers();
+        showToast('Account deleted.', 'success');
+      } catch (e) { showToast('Delete failed: ' + e.message, 'error'); }
+    }
+
+    // ============ BULK REBOOT ============
+    function openBulkRebootModal() {
+      // Populate tags dropdown
+      const tagSelect = document.getElementById('bulkRebootTag');
+      tagSelect.innerHTML = '<option value="">-- pick a tag --</option>' +
+        availableTags.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join('');
+      const modelSelect = document.getElementById('bulkRebootModel');
+      modelSelect.innerHTML = '<option value="">-- pick a model --</option>' +
+        availableModels.map(m => `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`).join('');
+      onBulkModeChange();
+      document.getElementById('bulkRebootModal').classList.remove('hidden');
+    }
+    function closeBulkRebootModal() { document.getElementById('bulkRebootModal').classList.add('hidden'); }
+
+    function onBulkModeChange() {
+      const mode = document.getElementById('bulkRebootMode').value;
+      document.getElementById('bulkByTagGroup').classList.toggle('hidden', mode !== 'byTag');
+      document.getElementById('bulkByModelGroup').classList.toggle('hidden', mode !== 'byModel');
+    }
+
+    async function executeBulkReboot() {
+      const mode = document.getElementById('bulkRebootMode').value;
+      const action = document.getElementById('bulkRebootAction').value;
+      const body = { action };
+      if (mode === 'byTag') {
+        body.tag = document.getElementById('bulkRebootTag').value;
+        if (!body.tag) { showToast('Pick a tag first.', 'warning'); return; }
+      } else if (mode === 'byModel') {
+        body.model = document.getElementById('bulkRebootModel').value;
+        if (!body.model) { showToast('Pick a model first.', 'warning'); return; }
+      } else if (mode === 'bySelected') {
+        body.deviceIds = getSelectedDeviceIds();
+        if (!body.deviceIds.length) { showToast('Select at least one device row.', 'warning'); return; }
+      }
+      const verb = action === 'reboot' ? 'REMOTE REBOOT' : 'OBJECT REFRESH';
+      if (!confirm(`Dispatch ${verb} to selected devices? This affects live subscribers.`)) return;
+      try {
+        const result = await apiRequest('/devices/bulk-action', 'POST', body);
+        showToast(`Dispatched to ${result.processed} devices.`, 'success');
+        closeBulkRebootModal();
+        loadDevices();
+      } catch (e) { showToast('Bulk failed: ' + e.message, 'error'); }
+    }
+
+    // ============ PAGINATION ============
+    function renderPagination(containerId, view, state) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const total = state.total || 0;
+      const ps = state.pageSize || 50;
+      const pages = Math.max(1, Math.ceil(total / ps));
+      const cur = Math.min(state.page, pages);
+      const start = total === 0 ? 0 : (cur - 1) * ps + 1;
+      const end = Math.min(total, cur * ps);
+
+      const pageNumbers = [];
+      const add = p => { if (p >= 1 && p <= pages && !pageNumbers.includes(p)) pageNumbers.push(p); };
+      add(1);
+      for (let p = cur - 2; p <= cur + 2; p++) add(p);
+      add(pages);
+      pageNumbers.sort((a, b) => a - b);
+      const buttons = [];
+      let prev = 0;
+      pageNumbers.forEach(p => {
+        if (p - prev > 1) buttons.push('<span style="color:var(--text-muted); padding:0 4px;">…</span>');
+        buttons.push(`<button class="page-btn ${p === cur ? 'active' : ''}" onclick="goToPage('${view}', ${p})">${p}</button>`);
+        prev = p;
+      });
+
+      container.innerHTML = `
+        <div class="page-info">${start}-${end} of ${total}</div>
+        <div class="pagination-controls">
+          <button class="page-btn" ${cur <= 1 ? 'disabled' : ''} onclick="goToPage('${view}', ${cur - 1})"><i class="ph-bold ph-caret-left"></i></button>
+          ${buttons.join('')}
+          <button class="page-btn" ${cur >= pages ? 'disabled' : ''} onclick="goToPage('${view}', ${cur + 1})"><i class="ph-bold ph-caret-right"></i></button>
+        </div>
+      `;
+    }
+
+    function goToPage(view, p) {
+      if (view === 'devices') devState.page = p;
+      else if (view === 'audit') audState.page = p;
+      else if (view === 'users') usrState.page = p;
+      if (view === 'devices') loadDevices();
+      else if (view === 'audit') loadAudit();
+      else if (view === 'users') loadUsers();
+    }
+
+    // ============ HTML ESCAPING ============
+    function escapeHtml(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+    function escapeAttr(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
   </script>
 </body>
