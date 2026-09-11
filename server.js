@@ -15,8 +15,11 @@ const FS_BASE  = process.env.FS_BASE  || 'http://127.0.0.1:7567';
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017';
 const DB_NAME = process.env.DB_NAME || 'genieacs';
 
-// Online threshold: 5 seconds per customer request
-const ONLINE_THRESHOLD_MS = 5 * 1000;
+// Online threshold: device counts as online if it informed within the
+// last 10 minutes. This covers the ONT-side PeriodicInformInterval (300s
+// default) plus jitter. "Active in last 5 sec" style windows are handled
+// client-side with the returned _lastInform timestamps instead.
+const ONLINE_THRESHOLD_MS = 10 * 60 * 1000;
 
 // CWMP namespace accepted on public port. GenieACS on the VPS sits on
 // :7548 after this; the Python proxy on :7547 rewrites cwmp-1-4 → 1-3.

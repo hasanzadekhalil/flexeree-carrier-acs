@@ -1,0 +1,17 @@
+[Unit]
+Description=CWMP namespace fixer proxy (7547 -> 7548)
+After=network.target genieacs-cwmp.service
+Wants=genieacs-cwmp.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/cwmp-proxy
+ExecStart=/usr/bin/python3 /opt/cwmp-proxy/proxy.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -7,7 +7,7 @@ send cwmp-1-4 are accepted without touching GenieACS itself.
 """
 import socket, threading, sys
 
-GENIEACS_HOST = "103.124.208.56"
+GENIEACS_HOST = "127.0.0.1"
 GENIEACS_PORT = 7548
 LISTEN_PORT   = 7547
 
