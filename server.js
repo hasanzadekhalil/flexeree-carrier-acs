@@ -334,7 +334,10 @@ app.get('/api/devices', authenticate, async (req, res) => {
         lastInform: lastInform ? lastInform.toISOString() : null,
         isOnline,
         wanIp: findParam(igd, 'ExternalIPAddress'),
-        pppoeUser: findParam(igd, 'Username'),
+        // Search WAN subtree FIRST: a global 'Username' search matches
+        // ManagementServer.ConnectionRequestUsername ('admin') before the
+        // real PPPoE user (proven live on Archer C6, 2026-09-15).
+        pppoeUser: (igd && igd.WANDevice && findParam(igd.WANDevice, 'Username')) || findParam(igd, 'Username'),
         rxPower: findParam(igd, 'RxOpticalPower') || findParam(igd, 'RXPower'),
         txPower: findParam(igd, 'TxOpticalPower') || findParam(igd, 'TXPower'),
         tags: d._tags || [],
