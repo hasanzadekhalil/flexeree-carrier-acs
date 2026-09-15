@@ -482,6 +482,45 @@ app.post('/api/devices/bulk-action', authenticate, requireRoles('Super Admin', '
   }
 });
 
+// ---------- DELETE devices (single + bulk) ----------
+app.delete('/api/devices/:id', authenticate, requireRoles('Super Admin', 'Admin'), async (req, res) => {
+  try {
+    if (!db) return res.status(503).json({ error: 'Database initializing...' });
+    const devId = req.params.id;
+    const resp = await nbiRequest('DELETE', '/devices/' + encodeURIComponent(devId));
+    // NBI delete removes the GenieACS document; belt-and-braces direct removal
+    // in case NBI is unreachable but Mongo is.
+    await db.collection('devices').deleteOne({ _id: devId });
+    logAudit(req.user, 'DELETE_DEVICE', devId, `Device removed from ACS inventory (NBI status ${resp.status})`);
+    res.json({ success: true, nbiStatus: resp.status });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/devices', authenticate, requireRoles('Super Admin', 'Admin'), async (req, res) => {
+  try {
+    if (!db) return res.status(503).json({ error: 'Database initializing...' });
+    const { deviceIds } = req.body || {};
+    if (!deviceIds || !deviceIds.length) return res.status(400).json({ error: 'No devices selected' });
+    const results = [];
+    for (const id of deviceIds) {
+      try {
+        const resp = await nbiRequest('DELETE', '/devices/' + encodeURIComponent(id));
+        await db.collection('devices').deleteOne({ _id: id });
+        results.push({ id, status: resp.status });
+      } catch (err) {
+        results.push({ id, status: 'error', error: err.message });
+      }
+    }
+    const ok = results.filter(r => r.status === 200 || r.status === 202 || r.status === 204).length;
+    logAudit(req.user, 'BULK_DELETE_DEVICES', `${deviceIds.length} devices`, `Deleted ${ok}/${deviceIds.length} from ACS inventory`);
+    res.json({ success: true, deleted: ok, total: deviceIds.length, results });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ---------- WAN / WiFi / Diagnostics ----------
 app.post('/api/devices/:id/wan-config', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
   const devId = req.params.id;
