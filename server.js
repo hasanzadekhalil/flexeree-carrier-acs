@@ -491,6 +491,7 @@ app.post('/api/devices/bulk-action', authenticate, requireRoles('Super Admin', '
       if (action === 'reboot') task = { name: 'reboot' };
       else if (action === 'refresh') task = { name: 'refreshObject', objectName: '' };
       else if (action === 'setParams') task = { name: 'setParameterValues', parameterValues: payload };
+      else return res.status(400).json({ error: 'Unknown bulk action: ' + action });
 
       if (task) {
         const taskUrl = await getDeviceTasksUrl(id, false);
