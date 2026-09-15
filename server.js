@@ -239,12 +239,13 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
 });
 
 // ---------- DEVICES ----------
+// Deep search: device trees nest params 4-6 levels deep (e.g.
+// WANDevice.1.X_CT-COM_EponInterfaceConfig.RXPower), so a top-level
+// scan always missed RX/TX/PPPoE/WAN_IP. Walk the whole tree.
 function findParam(obj, suffix) {
   if (!obj) return null;
-  for (const k of Object.keys(obj)) {
-    if (k.endsWith(suffix) && obj[k]) return obj[k]._value;
-  }
-  return null;
+  const all = findAllParamsEndingWith(obj, suffix);
+  return all.length ? all[0].value : null;
 }
 function findAllParamsEndingWith(root, suffix) {
   const out = [];
@@ -313,7 +314,10 @@ app.get('/api/devices', authenticate, async (req, res) => {
           wifiReadback.push({
             radio: k,
             ssid: w.SSID && w.SSID._value,
-            password: w.PreSharedKey && w.PreSharedKey['1'] && w.PreSharedKey['1'].KeyPassphrase && w.PreSharedKey['1'].KeyPassphrase._value,
+            // Flat KeyPassphrase works on both models; nested
+            // PreSharedKey.1.KeyPassphrase exists only on Syrotech.
+            password: (w.KeyPassphrase && (w.KeyPassphrase._value !== undefined ? w.KeyPassphrase._value : w.KeyPassphrase)) ||
+              (w.PreSharedKey && w.PreSharedKey['1'] && w.PreSharedKey['1'].KeyPassphrase && w.PreSharedKey['1'].KeyPassphrase._value),
             enabled: w.Enable && w.Enable._value,
             channel: w.Channel && w.Channel._value
           });
@@ -600,7 +604,10 @@ app.post('/api/devices/:id/wifi-config', authenticate, requireRoles('Super Admin
   const base = `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${radio || '1'}`;
   const paramValues = [];
   if (ssid) paramValues.push([`${base}.SSID`, ssid, 'xsd:string']);
-  if (password) paramValues.push([`${base}.PreSharedKey.1.KeyPassphrase`, password, 'xsd:string']);
+  // Flat KeyPassphrase exists on BOTH models (Syrotech + TP-Link Archer);
+  // the nested PreSharedKey.1.KeyPassphrase branch does NOT exist on Archer
+  // and faulted the whole task with cwmp.9003 (proven live 2026-09-15).
+  if (password) paramValues.push([`${base}.KeyPassphrase`, password, 'xsd:string']);
   if (enabled !== undefined) paramValues.push([`${base}.Enable`, Boolean(enabled), 'xsd:boolean']);
   if (channel) paramValues.push([`${base}.Channel`, parseInt(channel), 'xsd:unsignedInt']);
   const task = { name: 'setParameterValues', parameterValues: paramValues };
