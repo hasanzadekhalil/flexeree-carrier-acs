@@ -605,18 +605,24 @@ app.post('/api/devices/:id/wifi-config', authenticate, requireRoles('Super Admin
   const devId = req.params.id;
   const { radio, ssid, password, enabled, channel } = req.body;
   const base = `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${radio || '1'}`;
+  // Model-aware password path (proven live 2026-09-15): TP-Link Archer C6
+  // rejects KeyPassphrase with 9007 (whole task incl. SSID is lost), its
+  // writable key is the vendor param X_TP_PreSharedKey. Syrotech ONTs use
+  // the standard KeyPassphrase.
+  const realId = await resolveDeviceId(devId);
+  const doc = realId ? await db.collection('devices').findOne({ _id: realId }) : null;
+  const pc = (doc && doc._deviceId && (doc._deviceId._ProductClass + ' ' + doc._deviceId._Manufacturer)) || '';
+  const isTplink = /TP-Link|Archer/i.test(pc);
+  const passPath = isTplink ? `${base}.X_TP_PreSharedKey` : `${base}.KeyPassphrase`;
   const paramValues = [];
   if (ssid) paramValues.push([`${base}.SSID`, ssid, 'xsd:string']);
-  // Flat KeyPassphrase exists on BOTH models (Syrotech + TP-Link Archer);
-  // the nested PreSharedKey.1.KeyPassphrase branch does NOT exist on Archer
-  // and faulted the whole task with cwmp.9003 (proven live 2026-09-15).
-  if (password) paramValues.push([`${base}.KeyPassphrase`, password, 'xsd:string']);
+  if (password) paramValues.push([passPath, password, 'xsd:string']);
   if (enabled !== undefined) paramValues.push([`${base}.Enable`, Boolean(enabled), 'xsd:boolean']);
   if (channel) paramValues.push([`${base}.Channel`, parseInt(channel), 'xsd:unsignedInt']);
   const task = { name: 'setParameterValues', parameterValues: paramValues };
   const taskUrl = await getDeviceTasksUrl(devId);
   const resp = await nbiRequest('POST', taskUrl, task);
-  logAudit(req.user, 'WIFI_CONFIG', devId, `Radio ${radio}: SSID=${ssid}`);
+  logAudit(req.user, 'WIFI_CONFIG', devId, `Radio ${radio}: SSID=${ssid} (${isTplink ? 'TP-Link key' : 'standard key'})`);
   res.json(resp);
 }));
 
