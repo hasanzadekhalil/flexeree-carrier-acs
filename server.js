@@ -269,6 +269,120 @@ function findAllParamsEndingWith(root, suffix) {
   return out;
 }
 
+// Band label for a WLANConfiguration instance, from live vendor params
+// (proven on hardware): Syrotech X_CT-COM_RFBand 1=5GHz / 0=2.4GHz,
+// TP-Link X_TP_Band '5GHz'/'2.4GHz'. Falls back to Standard/SSID hints.
+function wifiBandOf(w, ssid) {
+  const rf = w && w['X_CT-COM_RFBand'] && w['X_CT-COM_RFBand']._value;
+  if (rf !== undefined && rf !== null && String(rf) !== '') {
+    return String(rf) === '1' ? '5GHz' : '2.4GHz';
+  }
+  const tp = w && w['X_TP_Band'] && w['X_TP_Band']._value;
+  if (tp) {
+    const s = String(tp);
+    if (/5/.test(s)) return '5GHz';
+    if (/2\.4/.test(s)) return '2.4GHz';
+    return s;
+  }
+  const std = w && w['Standard'] && w['Standard']._value;
+  if (std) {
+    const s = String(std).toLowerCase();
+    if (s.includes('ac') || s.includes('ax')) return '5GHz';
+  }
+  const nm = String(ssid || '').toLowerCase();
+  if (/5\s?g/.test(nm)) return '5GHz';
+  if (/2\.4|2\s?g/.test(nm)) return '2.4GHz';
+  return null;
+}
+// First Ethernet MAC under LANDevice (stable device identity for search /
+// table), else any MACAddress in the tree, upper-cased.
+function deviceMac(igd) {
+  const lan = igd && igd.LANDevice;
+  const m1 = lan && findParam(lan, 'MACAddress');
+  if (m1) return String(m1).toUpperCase();
+  const m2 = findParam(igd, 'MACAddress');
+  return m2 ? String(m2).toUpperCase() : null;
+}
+// First dotted TR-098 path of a connection object, e.g.
+// 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1'.
+// Lets WAN writes target the instance the ONT actually uses instead of a
+// hardcoded '.1' that is empty on some models.
+function findFirstInstancePath(igd, targetKey) {
+  let found = null;
+  function walk(o, prefix) {
+    if (!o || typeof o !== 'object' || found) return;
+    for (const k of Object.keys(o)) {
+      if (k.startsWith('_') || found) continue;
+      const v = o[k];
+      const path = prefix ? prefix + '.' + k : k;
+      if (k === targetKey && v && typeof v === 'object') {
+        const inst = Object.keys(v).filter(x => !x.startsWith('_'))[0];
+        if (inst) { found = path + '.' + inst; return; }
+      }
+      if (v && typeof v === 'object') walk(v, path);
+    }
+  }
+  walk(igd, 'InternetGatewayDevice');
+  return found;
+}
+async function wanBases(devId) {
+  const realId = await resolveDeviceId(devId);
+  const doc = realId ? await db.collection('devices').findOne({ _id: realId }) : null;
+  const igd = doc && (doc.InternetGatewayDevice || doc.Device);
+  const ppp = (igd && findFirstInstancePath(igd, 'WANPPPConnection'))
+    || 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1';
+  const ip = (igd && findFirstInstancePath(igd, 'WANIPConnection'))
+    || 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1';
+  return { pppBase: ppp, ipBase: ip, realId };
+}
+// WLAN instance key for a band ('2.4GHz'/'5GHz'): first live match in the
+// WLANConfiguration tree, else model-aware fallback (Syrotech radio1=5GHz,
+// radio5=2.4GHz; Archer 2.4GHz=1, 5GHz=3 — all proven on hardware).
+function wlanRadioForBand(doc, band) {
+  const igd = doc && (doc.InternetGatewayDevice || doc.Device);
+  const wl = igd && igd.LANDevice && igd.LANDevice['1'] && igd.LANDevice['1'].WLANConfiguration;
+  if (wl) {
+    for (const k of Object.keys(wl)) {
+      if (k.startsWith('_')) continue;
+      const w = wl[k];
+      const ssid = w.SSID && w.SSID._value;
+      if (wifiBandOf(w, ssid) === band) return k;
+    }
+  }
+  const pc = (doc && doc._deviceId && String(doc._deviceId._ProductClass + ' ' + doc._deviceId._Manufacturer)) || '';
+  const isSyro = /SY-GPON|Syrotech/i.test(pc);
+  const isTplink = /TP-Link|Archer/i.test(pc);
+  if (band === '5GHz') return isSyro ? '1' : isTplink ? '3' : '2';
+  return isSyro ? '5' : '1';
+}
+// Shared PPPoE provision used by wan-config and the auto-provision API:
+// writes Username/Password (+VLAN/DNS when given) to the ONT's real
+// WANPPPConnection instance via a single setParameterValues task.
+async function provisionPppoe(devId, opts, user) {
+  const { username, password, vlanId, priority, dns1, dns2 } = opts || {};
+  if (!username && !password) {
+    const e = new Error('username or password required');
+    e.statusCode = 400;
+    throw e;
+  }
+  const { pppBase } = await wanBases(devId);
+  const paramValues = [];
+  if (username) paramValues.push([`${pppBase}.Username`, username, 'xsd:string']);
+  if (password) paramValues.push([`${pppBase}.Password`, password, 'xsd:string']);
+  const vlan = parseInt(vlanId);
+  if (!isNaN(vlan)) paramValues.push([`${pppBase}.X_BROADCOM_COM_VlanMuxID`, vlan, 'xsd:int']);
+  const pri = parseInt(priority);
+  if (!isNaN(pri)) paramValues.push([`${pppBase}.X_BROADCOM_COM_VlanMux8021p`, pri, 'xsd:int']);
+  if (dns1 || dns2) {
+    paramValues.push([`${pppBase}.DNSServers`, [dns1, dns2].filter(Boolean).join(','), 'xsd:string']);
+  }
+  const task = { name: 'setParameterValues', parameterValues: paramValues };
+  const taskUrl = await getDeviceTasksUrl(devId);
+  const resp = await nbiRequest('POST', taskUrl, task);
+  logAudit(user, 'WAN_CONFIG', devId, `PPPoE provision on ${pppBase}, user: ${username || '(unchanged)'}`);
+  return { resp, pppBase };
+}
+
 // One portal-wide summary shape for a raw GenieACS device doc. Used by the
 // list, the CSV/XLSX export and the detail modal — so optical power,
 // WAN/PPPoE and Wi-Fi readback can never disagree between views.
@@ -302,9 +416,11 @@ function summarizeDevice(d, now) {
     for (const k of Object.keys(wlanBase)) {
       if (k.startsWith('_')) continue;
       const w = wlanBase[k];
+      const ssid = w.SSID && w.SSID._value;
       wifiReadback.push({
         radio: k,
-        ssid: w.SSID && w.SSID._value,
+        ssid,
+        band: wifiBandOf(w, ssid),
         password: cleanPassword(firstNonEmpty(
           w.KeyPassphrase && (w.KeyPassphrase._value !== undefined ? w.KeyPassphrase._value : w.KeyPassphrase),
           w.X_TP_PreSharedKey && (w.X_TP_PreSharedKey._value !== undefined ? w.X_TP_PreSharedKey._value : w.X_TP_PreSharedKey),
@@ -332,6 +448,7 @@ function summarizeDevice(d, now) {
     pppoeUser: (igd && igd.WANDevice && findParam(igd.WANDevice, 'Username')) || findParam(igd, 'Username'),
     rxPower: findParam(igd, 'RxOpticalPower') || findParam(igd, 'RXPower'),
     txPower: findParam(igd, 'TxOpticalPower') || findParam(igd, 'TXPower'),
+    mac: deviceMac(igd),
     tags: d._tags || [],
     wifiReadback
   };
@@ -344,13 +461,23 @@ app.get('/api/devices', authenticate, async (req, res) => {
     let filter = {};
     if (query) {
       const q = String(query);
+      // MAC lives deep under LANDevice.1.LANEthernetInterfaceConfig (TR-098,
+      // proven live). Colons/dashes differ between input and stored value,
+      // so match the separator-stripped tail against both dotted paths and
+      // the raw tree via a targeted $where on the two live-checked spots.
+      const macQ = q.replace(/[:-]/g, '').toUpperCase();
       filter['$or'] = [
         { '_id': { $regex: q, $options: 'i' } },
         { '_deviceId._SerialNumber': { $regex: q, $options: 'i' } },
         { '_deviceId._ProductClass': { $regex: q, $options: 'i' } },
         { '_deviceId._Manufacturer': { $regex: q, $options: 'i' } },
-        { '_tags': { $regex: q, $options: 'i' } }
+        { '_tags': { $regex: q, $options: 'i' } },
+        { 'InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.MACAddress._value': { $regex: q, $options: 'i' } },
+        { 'InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.2.MACAddress._value': { $regex: q, $options: 'i' } }
       ];
+      if (macQ && macQ.length >= 4) {
+        filter['$or'].push({ 'InternetGatewayDevice.LANDevice.1.LANEthernetInterfaceConfig.1.MACAddress._value': { $regex: macQ, $options: 'i' } });
+      }
     }
     if (tag) filter['_tags'] = tag;
     if (model) filter['_deviceId._ProductClass'] = model;
@@ -395,12 +522,13 @@ app.get('/api/devices/export', authenticate, async (req, res) => {
         LastInform: s.lastInform || '',
         WAN_IP: s.wanIp || '',
         PPPoE: s.pppoeUser || '',
+        MAC: s.mac || '',
         RX_dBm: (s.rxPower === null || s.rxPower === undefined) ? '' : s.rxPower,
         TX_dBm: (s.txPower === null || s.txPower === undefined) ? '' : s.txPower,
         Tags: (s.tags || []).join('|')
       };
     });
-    const headers = ['Serial','Manufacturer','Model','LastInform','WAN_IP','PPPoE','RX_dBm','TX_dBm','Tags'];
+    const headers = ['Serial','Manufacturer','Model','LastInform','WAN_IP','PPPoE','MAC','RX_dBm','TX_dBm','Tags'];
     if (fmt === 'xlsx' || fmt === 'excel') {
       res.setHeader('Content-Type', 'application/vnd.ms-excel');
       res.setHeader('Content-Disposition', 'attachment; filename="devices.xml"');
@@ -613,25 +741,112 @@ app.delete('/api/devices', authenticate, requireRoles('Super Admin', 'Admin'), a
 // ---------- WAN / WiFi / Diagnostics ----------
 app.post('/api/devices/:id/wan-config', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const devId = req.params.id;
-  const { connectionType, username, password, vlanId, priority, dns1, dns2 } = req.body;
+  const { connectionType, username, password, vlanId, priority, dns1, dns2, ip, subnet, gateway } = req.body;
+  const { pppBase, ipBase } = await wanBases(devId);
   const paramValues = [];
-  const pppBase = 'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1';
-  if (connectionType === 'PPPoE') {
+  if (connectionType === 'PPPoE' || username || password) {
     if (username) paramValues.push([`${pppBase}.Username`, username, 'xsd:string']);
     if (password) paramValues.push([`${pppBase}.Password`, password, 'xsd:string']);
-    if (vlanId) paramValues.push([`${pppBase}.X_BROADCOM_COM_VlanMuxID`, parseInt(vlanId), 'xsd:int']);
-    if (priority) paramValues.push([`${pppBase}.X_BROADCOM_COM_VlanMux8021p`, parseInt(priority), 'xsd:int']);
+    const vlan = parseInt(vlanId);
+    if (!isNaN(vlan)) paramValues.push([`${pppBase}.X_BROADCOM_COM_VlanMuxID`, vlan, 'xsd:int']);
+    const pri = parseInt(priority);
+    if (!isNaN(pri)) paramValues.push([`${pppBase}.X_BROADCOM_COM_VlanMux8021p`, pri, 'xsd:int']);
     if (dns1 || dns2) {
-      const dns = [dns1, dns2].filter(Boolean).join(',');
-      paramValues.push([`${pppBase}.DNSServers`, dns, 'xsd:string']);
+      paramValues.push([`${pppBase}.DNSServers`, [dns1, dns2].filter(Boolean).join(','), 'xsd:string']);
     }
   }
+  if (connectionType === 'Static') {
+    // Static IP lives on the WANIPConnection sibling, not the PPP node —
+    // writing it to the PPP path silently did nothing (the 'static not
+    // active' complaint). AddressingType Static + address fields together.
+    if (!ip) return res.status(400).json({ error: 'Static IP address required' });
+    paramValues.push([`${ipBase}.AddressingType`, 'Static', 'xsd:string']);
+    paramValues.push([`${ipBase}.ExternalIPAddress`, ip, 'xsd:string']);
+    if (subnet) paramValues.push([`${ipBase}.SubnetMask`, subnet, 'xsd:string']);
+    if (gateway) paramValues.push([`${ipBase}.DefaultGateway`, gateway, 'xsd:string']);
+    if (dns1 || dns2) {
+      paramValues.push([`${ipBase}.DNSServers`, [dns1, dns2].filter(Boolean).join(','), 'xsd:string']);
+    }
+  }
+  if (connectionType === 'DHCP') {
+    paramValues.push([`${ipBase}.AddressingType`, 'DHCP', 'xsd:string']);
+  }
+  if (!paramValues.length) return res.status(400).json({ error: 'Nothing to configure' });
   const task = { name: 'setParameterValues', parameterValues: paramValues };
   const taskUrl = await getDeviceTasksUrl(devId);
   const resp = await nbiRequest('POST', taskUrl, task);
-  logAudit(req.user, 'WAN_CONFIG', devId, `Configured ${connectionType} WAN, VLAN: ${vlanId}`);
-  res.json(resp);
+  logAudit(req.user, 'WAN_CONFIG', devId, `Configured ${connectionType || 'WAN'} (ppp=${pppBase}, ip=${ipBase}), VLAN: ${vlanId}`);
+  res.json({ ...resp, pppBase, ipBase });
 }));
+
+// Auto-provision: push PPPoE (and optional VLAN/DNS/Wi-Fi) to one device by
+// id, or to many by tag/model — one API for onboarding new ONTs as requested.
+app.post('/api/devices/provision-pppoe', authenticate, requireRoles('Super Admin', 'Admin'), async (req, res) => {
+  try {
+    if (!db) return res.status(503).json({ error: 'Database initializing...' });
+    const { deviceId, deviceIds, tag, model, username, password, vlanId, priority, dns1, dns2, wifi24, wifi5 } = req.body || {};
+    if (!username && !password) return res.status(400).json({ error: 'username or password required' });
+    let ids = [];
+    if (deviceId) ids = [deviceId];
+    else if (Array.isArray(deviceIds) && deviceIds.length) ids = deviceIds;
+    else if (tag) {
+      ids = (await db.collection('devices').find({ _tags: tag }, { projection: { _id: 1 } }).toArray()).map(d => d._id);
+    } else if (model) {
+      ids = (await db.collection('devices').find({
+        $or: [
+          { '_deviceId._ProductClass': model },
+          { '_deviceId._ModelName': model },
+          { '_deviceId._ProductClass': { $regex: model, $options: 'i' } },
+          { '_id': { $regex: model, $options: 'i' } }
+        ]
+      }, { projection: { _id: 1 } }).toArray()).map(d => d._id);
+    } else {
+      return res.status(400).json({ error: 'deviceId, deviceIds, tag or model required' });
+    }
+    if (!ids.length) return res.status(404).json({ error: 'No matching devices' });
+    const results = [];
+    for (const id of ids) {
+      try {
+        const { resp, pppBase } = await provisionPppoe(id, { username, password, vlanId, priority, dns1, dns2 }, req.user);
+        results.push({ id, status: resp.status, pppBase });
+      } catch (err) {
+        results.push({ id, status: 'error', error: err.message });
+      }
+    }
+    // Optional Wi-Fi push alongside PPPoE (same call, per-band SSID/pass)
+    async function pushWifi(id, band, cfg) {
+      if (!cfg || (!cfg.ssid && !cfg.password)) return null;
+      const realId2 = await resolveDeviceId(id);
+      const doc2 = realId2 ? await db.collection('devices').findOne({ _id: realId2 }) : null;
+      const radio = wlanRadioForBand(doc2, band);
+      const base = `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${radio}`;
+      const realId = await resolveDeviceId(id);
+      const doc = realId ? await db.collection('devices').findOne({ _id: realId }) : null;
+      const pc = (doc && doc._deviceId && (doc._deviceId._ProductClass + ' ' + doc._deviceId._Manufacturer)) || '';
+      const passPath = /TP-Link|Archer/i.test(pc) ? `${base}.X_TP_PreSharedKey` : `${base}.KeyPassphrase`;
+      const pv = [];
+      if (cfg.ssid) pv.push([`${base}.SSID`, cfg.ssid, 'xsd:string']);
+      if (cfg.password) pv.push([passPath, cfg.password, 'xsd:string']);
+      if (cfg.enabled !== undefined) pv.push([`${base}.Enable`, Boolean(cfg.enabled), 'xsd:boolean']);
+      if (cfg.channel) pv.push([`${base}.Channel`, parseInt(cfg.channel), 'xsd:unsignedInt']);
+      const url = await getDeviceTasksUrl(id);
+      return nbiRequest('POST', url, { name: 'setParameterValues', parameterValues: pv });
+    }
+    for (const r of results) {
+      if (r.status === 'error') continue;
+      try {
+        const w24 = wifi24 ? await pushWifi(r.id, '2.4GHz', wifi24) : null;
+        const w5 = wifi5 ? await pushWifi(r.id, '5GHz', wifi5) : null;
+        r.wifi = { band24: w24 && w24.status, band5: w5 && w5.status };
+      } catch (e) { r.wifi = { error: e.message }; }
+    }
+    const ok = results.filter(r => r.status === 200 || r.status === 202).length;
+    logAudit(req.user, 'AUTO_PROVISION', `${ids.length} devices`, `PPPoE user ${username}, ok ${ok}/${ids.length}`);
+    res.json({ success: true, provisioned: ok, total: ids.length, results });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 app.post('/api/devices/:id/wifi-config', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const devId = req.params.id;
@@ -661,10 +876,15 @@ app.post('/api/devices/:id/wifi-config', authenticate, requireRoles('Super Admin
 app.post('/api/devices/:id/diagnostics', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const devId = req.params.id;
   const { type, host } = req.body;
+  if (!host) return res.status(400).json({ error: 'host required' });
+  // DiagnosticsState None → set Host → Requested, in ONE task's parameter
+  // order (some ONTs ignore Requested while a previous run is still
+  // 'Completed'), then read back via GET so the panel shows real results.
   const objName = type === 'TraceRoute'
     ? 'InternetGatewayDevice.TraceRouteDiagnostics'
     : 'InternetGatewayDevice.IPPingDiagnostics';
   const paramValues = [
+    [`${objName}.DiagnosticsState`, 'None', 'xsd:string'],
     [`${objName}.Host`, host, 'xsd:string'],
     [`${objName}.DiagnosticsState`, 'Requested', 'xsd:string']
   ];
@@ -673,6 +893,29 @@ app.post('/api/devices/:id/diagnostics', authenticate, requireRoles('Super Admin
   const resp = await nbiRequest('POST', taskUrl, task);
   logAudit(req.user, 'DIAGNOSTICS', devId, `Requested ${type} to ${host}`);
   res.json(resp);
+}));
+
+app.get('/api/devices/:id/diagnostics', authenticate, taskRoute(async (req, res) => {
+  const realId = await resolveDeviceId(req.params.id);
+  if (!realId) return res.status(404).json({ error: 'Device not found' });
+  const d = await db.collection('devices').findOne({ _id: realId });
+  if (!d) return res.status(404).json({ error: 'Device not found' });
+  const igd = d.InternetGatewayDevice || d.Device || {};
+  const pick = (o) => {
+    if (!o) return null;
+    const g = (k) => (o[k] && o[k]._value !== undefined ? o[k]._value : null);
+    return {
+      state: g('DiagnosticsState'), host: g('Host'),
+      successCount: g('SuccessCount'), failureCount: g('FailureCount'),
+      avgMs: g('AverageResponseTime'), minMs: g('MinimumResponseTime'), maxMs: g('MaximumResponseTime'),
+      lastResult: g('LastResult') ?? g('Result')
+    };
+  };
+  res.json({
+    ping: pick(igd.IPPingDiagnostics),
+    traceroute: pick(igd.TraceRouteDiagnostics),
+    lastInform: d._lastInform || null
+  });
 }));
 
 // ---------- PRESETS ----------

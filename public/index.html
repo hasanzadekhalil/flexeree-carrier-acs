@@ -1201,7 +1201,7 @@
         <div class="filter-bar">
           <div class="search-input-group">
             <i class="ph-bold ph-magnifying-glass"></i>
-            <input type="text" id="deviceSearchInput" onkeyup="onDeviceFilterChange()" class="form-control" placeholder="Search serial, model, IP, tag...">
+            <input type="text" id="deviceSearchInput" onkeyup="onDeviceFilterChange()" class="form-control" placeholder="Search serial, MAC, model, IP, tag...">
           </div>
           <select id="deviceStatusFilter" onchange="onDeviceFilterChange()" class="filter-select">
             <option value="">All Status</option>
@@ -1222,6 +1222,40 @@
           </select>
         </div>
 
+        <div class="panel" style="padding: 14px 16px; margin-bottom: 12px;">
+          <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+            Auto-provision PPPoE <span style="color: var(--text-muted); font-weight: 400;">(selected rows, or tag below)</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: end;">
+            <div class="form-group" style="margin: 0; min-width: 150px;">
+              <label class="form-label">PPPoE Username</label>
+              <input type="text" id="provUser" class="form-control" placeholder="user@flexeree">
+            </div>
+            <div class="form-group" style="margin: 0; min-width: 130px;">
+              <label class="form-label">PPPoE Password</label>
+              <input type="password" id="provPass" class="form-control" placeholder="secret">
+            </div>
+            <div class="form-group" style="margin: 0; width: 80px;">
+              <label class="form-label">VLAN</label>
+              <input type="number" id="provVlan" class="form-control" placeholder="100">
+            </div>
+            <div class="form-group" style="margin: 0; min-width: 130px;">
+              <label class="form-label">Tag (optional)</label>
+              <input type="text" id="provTag" class="form-control" placeholder="new-onts">
+            </div>
+            <div class="form-group" style="margin: 0; min-width: 130px;">
+              <label class="form-label">2.4G SSID (opt)</label>
+              <input type="text" id="provWifi24" class="form-control" placeholder="Flexeree_WiFi">
+            </div>
+            <div class="form-group" style="margin: 0; min-width: 130px;">
+              <label class="form-label">5G SSID (opt)</label>
+              <input type="text" id="provWifi5" class="form-control" placeholder="Flexeree_5G">
+            </div>
+            <button onclick="autoProvision()" class="btn btn-primary btn-sm">Provision Selected</button>
+          </div>
+          <div id="provOutput" class="hidden" style="margin-top: 8px; font-family: var(--font-mono); font-size: 11px; color: var(--cyan-400);"></div>
+        </div>
+
         <div class="panel">
           <div class="table-wrapper">
             <table class="carrier-table">
@@ -1230,6 +1264,7 @@
                   <th style="width: 28px;"><input type="checkbox" id="deviceSelectAll" class="row-checkbox" onchange="toggleSelectAllDevices(this)"></th>
                   <th>Status</th>
                   <th>Serial Number / ID</th>
+                  <th>MAC Address</th>
                   <th>Model & Vendor</th>
                   <th>WAN IP / PPPoE</th>
                   <th>Optical Power (RX / TX)</th>
@@ -1458,6 +1493,7 @@
               <div><span style="color: var(--text-muted);">Manufacturer:</span> <span id="modalManufacturer" style="font-weight: 600; color: var(--text-primary);">Syrotech</span></div>
               <div><span style="color: var(--text-muted);">Product Class:</span> <span id="modalProductClass" style="font-weight: 600; color: var(--text-primary);">SY-GPON-1110-WDONT</span></div>
               <div><span style="color: var(--text-muted);">Serial Number:</span> <span id="modalSerial" style="font-family: var(--font-mono); color: var(--text-primary);"></span></div>
+              <div><span style="color: var(--text-muted);">MAC Address:</span> <span id="modalMac" style="font-family: var(--font-mono); color: var(--text-primary);"></span></div>
               <div><span style="color: var(--text-muted);">Hardware Ver:</span> <span id="modalHwVer" style="color: var(--text-primary);"></span></div>
               <div><span style="color: var(--text-muted);">Software Ver:</span> <span id="modalSwVer" style="color: var(--text-primary);"></span></div>
               <div><span style="color: var(--text-muted);">Last Inform:</span> <span id="modalLastInform" style="color: var(--text-primary);"></span></div>
@@ -1479,7 +1515,7 @@
             <div class="form-grid">
               <div class="form-group">
                 <label class="form-label">Connection Protocol</label>
-                <select id="wanConnType" class="form-control">
+                <select id="wanConnType" class="form-control" onchange="onWanConnTypeChange()">
                   <option value="PPPoE">PPPoE (Recommended)</option>
                   <option value="DHCP">DHCP / IPoE</option>
                   <option value="Static">Static IP</option>
@@ -1489,13 +1525,25 @@
                 <label class="form-label">802.1Q VLAN ID</label>
                 <input type="number" id="wanVlanId" class="form-control" placeholder="100">
               </div>
-              <div class="form-group">
+              <div class="form-group" id="wanPppoeUserWrap">
                 <label class="form-label">PPPoE Username</label>
                 <input type="text" id="wanPppoeUser" class="form-control" placeholder="user@flexeree">
               </div>
-              <div class="form-group">
+              <div class="form-group" id="wanPppoePassWrap">
                 <label class="form-label">PPPoE Password</label>
-                <input type="password" id="wanPppoePass" class="form-control" placeholder="••••••••">
+                <input type="password" id="wanPppoePass" class="form-control" placeholder="•сена">
+              </div>
+              <div class="form-group wan-static-only" style="display: none;">
+                <label class="form-label">Static IP Address</label>
+                <input type="text" id="wanStaticIp" class="form-control" placeholder="203.0.113.10">
+              </div>
+              <div class="form-group wan-static-only" style="display: none;">
+                <label class="form-label">Subnet Mask</label>
+                <input type="text" id="wanStaticSubnet" class="form-control" placeholder="255.255.255.0">
+              </div>
+              <div class="form-group wan-static-only" style="display: none;">
+                <label class="form-label">Gateway</label>
+                <input type="text" id="wanStaticGateway" class="form-control" placeholder="203.0.113.1">
               </div>
               <div class="form-group">
                 <label class="form-label">Primary DNS</label>
@@ -1527,7 +1575,7 @@
 
           <div class="panel" style="margin-bottom: 0; padding: 16px;">
             <div class="wifi-band-header">
-              <div style="font-weight: 700; color: var(--cyan-400); font-size: 12px;"><i class="ph-bold ph-wifi-high"></i> 2.4 GHz Primary Radio</div>
+              <div style="font-weight: 700; color: var(--cyan-400); font-size: 12px;"><i class="ph-bold ph-wifi-high"></i> <span id="wifi24BandLabel">2.4 GHz</span> Radio <span id="wifi24RadioLabel" style="color: var(--text-muted); font-weight: 400;"></span></div>
               <label style="display: flex; align-items: center; gap: 6px; font-size: 11px;">
                 <input type="checkbox" id="wifi24Enabled" checked> Enabled
               </label>
@@ -1547,11 +1595,12 @@
               </div>
             </div>
             <button onclick="saveWifiConfig('1')" class="btn btn-primary btn-sm">Push 2.4G Configuration</button>
+            <button onclick="saveWifiConfig('5')" class="btn btn-secondary btn-sm" style="margin-left: 8px;">Push 2.4G to Radio 5</button>
           </div>
 
           <div class="panel" style="margin-bottom: 0; padding: 16px;">
             <div class="wifi-band-header">
-              <div style="font-weight: 700; color: var(--emerald-500); font-size: 12px;"><i class="ph-bold ph-wifi-high"></i> 5 GHz High-Speed Radio</div>
+              <div style="font-weight: 700; color: var(--emerald-500); font-size: 12px;"><i class="ph-bold ph-wifi-high"></i> <span id="wifi5BandLabel">5 GHz</span> Radio <span id="wifi5RadioLabel" style="color: var(--text-muted); font-weight: 400;"></span></div>
               <label style="display: flex; align-items: center; gap: 6px; font-size: 11px;">
                 <input type="checkbox" id="wifi5Enabled" checked> Enabled
               </label>
@@ -2127,6 +2176,7 @@
               </span>
             </td>
             <td style="font-family: var(--font-mono); font-weight: 600; color: var(--text-primary);">${escapeHtml(d.serialNumber)}</td>
+            <td style="font-family: var(--font-mono);">${d.mac ? escapeHtml(d.mac) : '<span style="color: var(--text-muted);">-</span>'}</td>
             <td>
               <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(d.productClass)}</div>
               <div style="font-size: 10px; color: var(--text-muted);">${escapeHtml(d.manufacturer)} · FW: ${escapeHtml(d.softwareVersion)}</div>
@@ -2193,6 +2243,7 @@
       document.getElementById('modalManufacturer').innerText = d.manufacturer;
       document.getElementById('modalProductClass').innerText = d.productClass;
       document.getElementById('modalSerial').innerText = d.serialNumber;
+      document.getElementById('modalMac').innerText = d.mac || 'N/A';
       document.getElementById('modalHwVer').innerText = d.hardwareVersion || '-';
       document.getElementById('modalSwVer').innerText = d.softwareVersion || '-';
       document.getElementById('modalLastInform').innerText = d.lastInform ? new Date(d.lastInform).toLocaleString() : 'N/A';
@@ -2212,6 +2263,34 @@
       document.getElementById('modalTxStatus').style.color = isNaN(tx) ? 'var(--text-muted)' : (tx >= 0.5 && tx <= 5 ? 'var(--cyan-400)' : 'var(--rose-500)');
 
       renderModalTags();
+      // Band-aware Wi-Fi panel labels (live values, e.g. Syrotech
+      // radio1=5GHz radio5=2.4GHz) so push buttons hit the right instance.
+      try {
+        const rb2 = (d.wifiReadback || []).find(w => w.band === '2.4GHz') || (d.wifiReadback || []).find(w => w.radio === '1');
+        const rb5 = (d.wifiReadback || []).find(w => w.band === '5GHz') || (d.wifiReadback || []).find(w => w.radio === '2');
+        const l24 = document.getElementById('wifi24RadioLabel');
+        const l5 = document.getElementById('wifi5RadioLabel');
+        if (l24 && rb2) l24.innerText = '(Radio ' + rb2.radio + ')';
+        if (l5 && rb5) l5.innerText = '(Radio ' + rb5.radio + ')';
+        if (rb2) {
+          document.getElementById('wifi24Ssid').value = rb2.ssid || '';
+          document.getElementById('wifi24Enabled').checked = !!rb2.enabled;
+        }
+        if (rb5) {
+          document.getElementById('wifi5Ssid').value = rb5.ssid || '';
+          document.getElementById('wifi5Enabled').checked = !!rb5.enabled;
+        }
+        // Rewire push buttons to the real instance keys
+        const btns = document.querySelectorAll('#tabContent-wifi .btn-primary.btn-sm');
+        if (rb2 && btns[0]) btns[0].setAttribute('onclick', "saveWifiConfig('" + rb2.radio + "')");
+        if (rb5 && btns[1]) btns[1].setAttribute('onclick', "saveWifiConfig('" + rb5.radio + "')");
+      } catch (e) { /* labels stay generic */ }
+      // Pre-fill WAN PPPoE user for editing (password stays empty: ONTs
+      // mask it as ******, so it is never readable).
+      try {
+        if (d.pppoeUser) document.getElementById('wanPppoeUser').value = d.pppoeUser;
+        onWanConnTypeChange();
+      } catch (e) { /* form untouched */ }
       renderWifiReadback(d);
     }
 
@@ -2277,6 +2356,15 @@
       } catch (e) { showToast('Failed to remove tag: ' + e.message, 'error'); }
     }
 
+    function onWanConnTypeChange() {
+      const t = document.getElementById('wanConnType').value;
+      document.querySelectorAll('.wan-static-only').forEach(el => { el.style.display = t === 'Static' ? '' : 'none'; });
+      const showPppoe = t !== 'DHCP' && t !== 'Static';
+      ['wanPppoeUserWrap', 'wanPppoePassWrap'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = showPppoe ? '' : 'none';
+      });
+    }
     async function saveWanConfig() {
       if (!selectedDevice) return;
       const body = {
@@ -2285,17 +2373,25 @@
         username: document.getElementById('wanPppoeUser').value,
         password: document.getElementById('wanPppoePass').value,
         dns1: document.getElementById('wanDns1').value,
-        dns2: document.getElementById('wanDns2').value
+        dns2: document.getElementById('wanDns2').value,
+        ip: document.getElementById('wanStaticIp').value,
+        subnet: document.getElementById('wanStaticSubnet').value,
+        gateway: document.getElementById('wanStaticGateway').value
       };
       try {
-        await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/wan-config', 'POST', body);
+        const r = await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/wan-config', 'POST', body);
         showToast('Carrier WAN provisioning command dispatched via TR-069!', 'success');
+        if (selectedDevice) { selectedDevice.wanIp = null; }
+        void r;
       } catch (e) { showToast('WAN config failed: ' + e.message, 'error'); }
     }
 
     async function saveWifiConfig(radio) {
       if (!selectedDevice) return;
-      const is5g = radio === '2';
+      // Band label comes from the live readback (Syrotech radio1=5GHz,
+      // radio5=2.4GHz) — the radio number itself is the instance key.
+      const rb = (selectedDevice.wifiReadback || []).find(w => w.radio === radio);
+      const is5g = rb && rb.band ? rb.band === '5GHz' : (radio === '2' || radio === '3');
       const channelEl = document.getElementById(is5g ? 'wifi5Channel' : 'wifi24Channel');
       const body = {
         radio,
@@ -2333,7 +2429,7 @@
         return `
           <div class="wifi-readback-card">
             <div style="font-weight: 700; color: var(--text-primary); font-size: 12px; margin-bottom: 6px;">
-              Radio ${escapeHtml(w.radio)}
+              Radio ${escapeHtml(w.radio)}${w.band ? ` <span style="color: var(--cyan-400); font-size: 11px;">· ${escapeHtml(w.band)}</span>` : ''}
               <span style="font-family: var(--font-mono); color: ${w.enabled ? 'var(--emerald-500)' : 'var(--text-muted)'}; font-size: 10px; margin-left: 6px;">
                 ${w.enabled ? 'ENABLED' : 'DISABLED'}
               </span>
@@ -2372,9 +2468,10 @@
         if (fresh && fresh.summary) {
           selectedDevice.wifiReadback = fresh.summary.wifiReadback || [];
           const wifiReadback = selectedDevice.wifiReadback;
-          // also pre-fill input fields with current values
-          const w24 = wifiReadback.find(w => w.radio === '1');
-          const w5 = wifiReadback.find(w => w.radio === '2');
+          // also pre-fill input fields with current values (band-aware:
+          // find by live band, fall back to legacy radio numbers)
+          const w24 = wifiReadback.find(w => w.band === '2.4GHz') || wifiReadback.find(w => w.radio === '1');
+          const w5 = wifiReadback.find(w => w.band === '5GHz') || wifiReadback.find(w => w.radio === '2');
           if (w24) {
             document.getElementById('wifi24Ssid').value = w24.ssid || '';
             document.getElementById('wifi24Enabled').checked = !!w24.enabled;
@@ -2405,15 +2502,61 @@
     async function runDiagnostics() {
       if (!selectedDevice) return;
       const type = document.getElementById('diagType').value;
-      const host = document.getElementById('diagHost').value;
+      const host = document.getElementById('diagHost').value.trim();
       const outBox = document.getElementById('diagOutput');
-      outBox.innerText = `Dispatching ${type} test to ${host}...`;
+      if (!host) { outBox.innerText = 'Enter a host first.'; outBox.classList.remove('hidden'); return; }
+      outBox.innerText = 'Dispatching ' + type + ' test to ' + host + '...';
       outBox.classList.remove('hidden');
       try {
         await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/diagnostics', 'POST', { type, host });
-        outBox.innerText = `Diagnostic task [${type}] queued. Results gathered on next Inform.`;
+        outBox.innerText = 'Task queued. Waiting for ONT result (up to ~60s)...';
+        // Poll the read endpoint: the ONT runs the test, then Reports state
+        // + counters on its next Inform. Show real values when they land.
+        for (let i = 0; i < 12; i++) {
+          await new Promise(r => setTimeout(r, 5000));
+          try {
+            const r = await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/diagnostics');
+            const sec = type === 'TraceRoute' ? r.traceroute : r.ping;
+            if (sec && sec.state && sec.state !== 'Requested' && sec.state !== 'None') {
+              outBox.innerText = type + ' to ' + host + ' — state: ' + sec.state +
+                ', ok: ' + (sec.successCount ?? '-') + ', fail: ' + (sec.failureCount ?? '-') +
+                ', avg: ' + (sec.avgMs ?? '-') + 'ms (min ' + (sec.minMs ?? '-') + ' / max ' + (sec.maxMs ?? '-') + ')';
+              return;
+            }
+            outBox.innerText = 'Task queued. ONT still running (check ' + (i + 1) + '/12)...';
+          } catch (e) { /* keep polling */ }
+        }
+        outBox.innerText = 'Task queued. ONT has not reported yet — refresh in a minute and run again to read results.';
       } catch (e) {
         outBox.innerText = 'Failed: ' + e.message;
+      }
+    }
+    async function autoProvision() {
+      const userEl = document.getElementById('provUser');
+      const passEl = document.getElementById('provPass');
+      const outEl = document.getElementById('provOutput');
+      const username = userEl ? userEl.value.trim() : '';
+      const password = passEl ? passEl.value : '';
+      if (!username && !password) { showToast('Enter PPPoE username or password first.', 'warning'); return; }
+      const tagEl = document.getElementById('provTag');
+      const body = {
+        deviceIds: getSelectedDeviceIds(),
+        tag: tagEl ? tagEl.value.trim() : '',
+        username, password,
+        vlanId: document.getElementById('provVlan') ? document.getElementById('provVlan').value : '',
+        wifi24: { ssid: document.getElementById('provWifi24') ? document.getElementById('provWifi24').value : '' },
+        wifi5: { ssid: document.getElementById('provWifi5') ? document.getElementById('provWifi5').value : '' }
+      };
+      if (outEl) { outEl.innerText = 'Provisioning...'; outEl.classList.remove('hidden'); }
+      try {
+        const r = await apiRequest('/devices/provision-pppoe', 'POST', body);
+        const msg = 'Provisioned ' + r.provisioned + '/' + r.total + ' devices.';
+        if (outEl) outEl.innerText = msg + ' ' + (r.results || []).map(x => x.id + '=' + x.status).join(', ');
+        showToast(msg, 'success');
+        loadDevices();
+      } catch (e) {
+        if (outEl) outEl.innerText = 'Failed: ' + e.message;
+        showToast('Auto-provision failed: ' + e.message, 'error');
       }
     }
 
