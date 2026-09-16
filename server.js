@@ -6,6 +6,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const { execFile } = require('child_process');
 
 const app = express();
 const PORT = 4000;
@@ -715,6 +716,42 @@ app.get('/api/stun/status', authenticate, (req, res) => {
       'ACS URL must remain: ' + PUBLIC_CWMP_URL
     ]
   });
+});
+
+// Run a command with fixed argv (no shell) and a short timeout.
+function runCmd(cmd, args, timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    execFile(cmd, args, { timeout: timeoutMs }, (err, stdout, stderr) => {
+      resolve({ err: err ? String(err.message || err) : null, stdout: String(stdout || ''), stderr: String(stderr || '') });
+    });
+  });
+}
+function safeIp(s) {
+  return /^[A-Za-z0-9.\-:]+$/.test(String(s || '')) ? String(s) : null;
+}
+
+// ONT reachability check from the VPS: ping / TCP connect / CWMP log tail.
+app.post('/api/diagnostics/ont-reachability', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
+  try {
+    const ip = safeIp(req.body && req.body.ip);
+    if (!ip) return res.status(400).json({ error: 'Valid ip required' });
+    const ping = await runCmd('ping', ['-c', '3', '-W', '2', ip]);
+    const tcp = await runCmd('bash', ['-c', `timeout 5 bash -c 'cat < /dev/null > /dev/tcp/${ip}/7547' 2>&1 && echo TCP7547_OPEN || echo TCP7547_CLOSED`]);
+    res.json({ ip, pingOk: !ping.err, ping: (ping.stdout + ping.stderr).slice(0, 1500), tcp: (tcp.stdout + tcp.stderr).slice(0, 500) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Recent 7547 connection attempts seen by the proxy (journal tail, parsed).
+app.get('/api/diagnostics/cwmp-hits', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
+  try {
+    const j = await runCmd('journalctl', ['-u', 'cwmp-proxy', '--no-pager', '--since', '24 hours ago']);
+    const lines = (j.stdout || '').split('\n').filter(l => l.includes('ONT connect from'));
+    const hits = lines.slice(-50).map(l => {
+      const m = l.match(/(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}).*ONT connect from \('([^']+)',\s*(\d+)\)/);
+      return m ? { time: m[1], ip: m[2], port: m[3] } : { raw: l.slice(0, 160) };
+    });
+    res.json({ count24h: lines.length, hits });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ---------- SPA fallback ----------

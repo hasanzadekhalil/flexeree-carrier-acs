@@ -1054,6 +1054,9 @@
         <button onclick="navigate('users')" id="nav-users" class="nav-item">
           <i class="ph-bold ph-users-three"></i> Staff & RBAC
         </button>
+        <button onclick="navigate('onboarding')" id="nav-onboarding" class="nav-item">
+          <i class="ph-bold ph-plugs-connected"></i> ONT Onboarding
+        </button>
       </div>
 
       <div class="sidebar-infra">
@@ -1350,6 +1353,48 @@
             </table>
           </div>
           <div id="usersPagination" class="pagination-bar"></div>
+        </div>
+      </section>
+
+      <section id="view-onboarding" class="hidden">
+        <div class="action-toolbar">
+          <div>
+            <div style="font-size: 15px; font-weight: 700;">ONT Onboarding & Connection Check</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Verify a new ONT reaches the ACS before expecting it on the dashboard</div>
+          </div>
+          <button onclick="loadCwmpHits()" class="btn btn-secondary btn-sm">
+            <i class="ph-bold ph-arrows-clockwise"></i> Refresh Hits
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="panel" style="padding: 16px;">
+            <div class="panel-title" style="margin-bottom: 10px;">1 · Check ONT reachability from VPS</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Enter the ONT's public/WAN IP (Status page of the ONT, or your uplink router). The server pings it and probes TCP :7547.</div>
+            <div class="bulk-row" style="margin-bottom: 10px;">
+              <input type="text" id="ontCheckIp" class="form-control" placeholder="e.g. 69.30.251.194" style="font-family: var(--font-mono);">
+              <button onclick="checkOntReachability()" class="btn btn-primary btn-sm" style="white-space: nowrap;">Check</button>
+            </div>
+            <div id="ontCheckResult" style="font-size: 11px; font-family: var(--font-mono); white-space: pre-wrap; color: var(--text-secondary);">No check run yet.</div>
+          </div>
+
+          <div class="panel" style="padding: 16px;">
+            <div class="panel-title" style="margin-bottom: 10px;">2 · Recent connection attempts on :7547</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Every TCP hit on the CWMP proxy in the last 24h. Reboot the ONT, then look for its IP here within 1–2 minutes.</div>
+            <div id="cwmpHitsResult" style="font-size: 11px; font-family: var(--font-mono); color: var(--text-secondary);">Loading…</div>
+          </div>
+        </div>
+
+        <div class="panel" style="padding: 16px; margin-top: 14px;">
+          <div class="panel-title" style="margin-bottom: 10px;">3 · Syrotech TR-069 checklist (SY-GPON-1110-WDONT / 2010-WADONT)</div>
+          <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.9;">
+            ① Server URL <span style="font-family: var(--font-mono);">http://103.124.208.56:7547</span> → <b>Save/Apply</b> → <b>reboot ONT from power</b> (URL applies only after reboot).<br>
+            ② Periodic Report <b>Enable</b>, interval <b>60</b> sec for testing (back to 300 when green).<br>
+            ③ STUN: leave <b>Disable</b> until the device appears (STUN is only for connection-request, not Inform).<br>
+            ④ Username/password on this page are <b>ignored</b> by the ACS — any value works.<br>
+            ⑤ From a PC behind the ONT, open <span style="font-family: var(--font-mono);">http://103.124.208.56/</span> — if it does not load, the ONT has no route out.<br>
+            ⑥ After reboot, the ONT must appear here in step 2 within 2 min, then on ONT Devices within 10 min (online window).
+          </div>
         </div>
       </section>
 
@@ -1867,7 +1912,7 @@
     function showLogin() {
       document.getElementById('userHeaderControls').classList.add('hidden');
       document.getElementById('mainSidebar').classList.add('hidden');
-      ['dashboard', 'devices', 'presets', 'audit', 'users'].forEach(v => {
+      ['dashboard', 'devices', 'presets', 'audit', 'users', 'onboarding'].forEach(v => {
         const el = document.getElementById('view-' + v);
         if (el) el.classList.add('hidden');
       });
@@ -1908,7 +1953,7 @@
 
     // ============ NAVIGATION ============
     function navigate(view) {
-      const views = ['login', 'dashboard', 'devices', 'presets', 'audit', 'users'];
+      const views = ['login', 'dashboard', 'devices', 'presets', 'audit', 'users', 'onboarding'];
       views.forEach(v => {
         const el = document.getElementById('view-' + v);
         if (el) el.classList.add('hidden');
@@ -1926,6 +1971,33 @@
       if (view === 'presets') loadPresets();
       if (view === 'audit') loadAudit();
       if (view === 'users') loadUsers();
+      if (view === 'onboarding') loadCwmpHits();
+    }
+
+    // ============ ONT ONBOARDING ============
+    async function checkOntReachability() {
+      const ip = document.getElementById('ontCheckIp').value.trim();
+      const out = document.getElementById('ontCheckResult');
+      if (!ip) { showToast('Enter the ONT IP first.', 'warning'); return; }
+      out.innerText = 'Checking ' + ip + ' …';
+      try {
+        const r = await apiRequest('/diagnostics/ont-reachability', 'POST', { ip });
+        out.innerText = 'PING: ' + (r.pingOk ? 'OK' : 'FAIL') + '\n' + (r.ping || '') + '\nTCP :7547: ' + (r.tcp || '').trim();
+      } catch (e) { out.innerText = 'Check failed: ' + e.message; }
+    }
+
+    async function loadCwmpHits() {
+      const out = document.getElementById('cwmpHitsResult');
+      if (!out) return;
+      try {
+        const r = await apiRequest('/diagnostics/cwmp-hits');
+        if (!r.hits || !r.hits.length) {
+          out.innerText = 'No connection attempts in last 24h (' + (r.count24h || 0) + '). Reboot the ONT and refresh.';
+          return;
+        }
+        out.innerHTML = '<div style="margin-bottom:6px;">' + r.count24h + ' hits / 24h · showing last ' + r.hits.length + '</div>' +
+          r.hits.slice().reverse().map(h => '<div>' + escapeHtml(h.time || '') + ' ← ' + escapeHtml(h.ip || '') + ':' + escapeHtml(h.port || '') + '</div>').join('');
+      } catch (e) { out.innerText = 'Failed to load: ' + e.message; }
     }
 
     // ============ DASHBOARD ============
