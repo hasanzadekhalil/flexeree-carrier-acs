@@ -2250,17 +2250,22 @@
 
       const rx = parseFloat(d.rxPower);
       const tx = parseFloat(d.txPower);
-      document.getElementById('modalRxPower').innerText = isNaN(rx) ? 'N/A' : `${rx} dBm`;
+      // Non-optical gear (e.g. Archer C6 router) has no PON optics — say so
+      // instead of 'No reading', which looks like a broken sensor.
+      const noOptics = isNaN(rx) && isNaN(tx);
+      document.getElementById('modalRxPower').innerText = isNaN(rx) ? (noOptics ? '—' : 'N/A') : `${rx} dBm`;
       document.getElementById('modalRxBar').className = 'gauge-bar ' + (isNaN(rx) ? '' : (rx >= -27 && rx <= -8 ? 'good' : 'bad'));
       document.getElementById('modalRxBar').style.width = isNaN(rx) ? '0%' : Math.min(100, Math.max(0, ((rx + 35) * 100 / 27))) + '%';
-      document.getElementById('modalRxStatus').innerText = isNaN(rx) ? 'No reading' : (rx >= -27 && rx <= -8 ? 'Normal Optical Signal' : 'Critical Signal');
-      document.getElementById('modalRxStatus').style.color = isNaN(rx) ? 'var(--text-muted)' : (rx >= -27 && rx <= -8 ? 'var(--emerald-500)' : 'var(--rose-500)');
+      document.getElementById('modalRxStatus').innerText = isNaN(rx) ? (noOptics ? 'Not an optical device (router, no PON)' : 'No reading') : (rx >= -27 && rx <= -8 ? 'Normal Optical Signal' : 'Critical Signal');
+      document.getElementById('modalRxStatus').style.color = 'var(--text-muted)';
+      if (!isNaN(rx)) document.getElementById('modalRxStatus').style.color = (rx >= -27 && rx <= -8 ? 'var(--emerald-500)' : 'var(--rose-500)');
 
-      document.getElementById('modalTxPower').innerText = isNaN(tx) ? 'N/A' : `${tx} dBm`;
+      document.getElementById('modalTxPower').innerText = isNaN(tx) ? (noOptics ? '—' : 'N/A') : `${tx} dBm`;
       document.getElementById('modalTxBar').className = 'gauge-bar ' + (isNaN(tx) ? '' : (tx >= 0.5 && tx <= 5 ? 'good' : 'bad'));
       document.getElementById('modalTxBar').style.width = isNaN(tx) ? '0%' : Math.min(100, Math.max(0, (tx / 5) * 100)) + '%';
-      document.getElementById('modalTxStatus').innerText = isNaN(tx) ? 'No reading' : (tx >= 0.5 && tx <= 5 ? 'Normal Transmit Power' : 'Critical TX');
-      document.getElementById('modalTxStatus').style.color = isNaN(tx) ? 'var(--text-muted)' : (tx >= 0.5 && tx <= 5 ? 'var(--cyan-400)' : 'var(--rose-500)');
+      document.getElementById('modalTxStatus').innerText = isNaN(tx) ? (noOptics ? 'Not an optical device (router, no PON)' : 'No reading') : (tx >= 0.5 && tx <= 5 ? 'Normal Transmit Power' : 'Critical TX');
+      document.getElementById('modalTxStatus').style.color = 'var(--text-muted)';
+      if (!isNaN(tx)) document.getElementById('modalTxStatus').style.color = (tx >= 0.5 && tx <= 5 ? 'var(--cyan-400)' : 'var(--rose-500)');
 
       renderModalTags();
       // Band-aware Wi-Fi panel labels (live values, e.g. Syrotech
