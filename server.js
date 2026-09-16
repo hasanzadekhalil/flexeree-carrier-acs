@@ -294,10 +294,14 @@ function wifiBandOf(w, ssid) {
   if (/2\.4|2\s?g/.test(nm)) return '2.4GHz';
   return null;
 }
-// First Ethernet MAC under LANDevice (stable device identity for search /
-// table), else any MACAddress in the tree, upper-cased.
+// First Ethernet MAC under LANDevice, preferring port 1 (the physical
+// device MAC matching the serial). Port 2+ can be a virtual/bridge MAC
+// (seen live: Archer port1=5C:62 serial MAC, WLAN roots=50:2B).
 function deviceMac(igd) {
-  const lan = igd && igd.LANDevice;
+  const lan = igd && igd.LANDevice && igd.LANDevice['1'];
+  const eth = lan && lan.LANEthernetInterfaceConfig;
+  const p1 = eth && eth['1'] && eth['1'].MACAddress && eth['1'].MACAddress._value;
+  if (p1) return String(p1).toUpperCase();
   const m1 = lan && findParam(lan, 'MACAddress');
   if (m1) return String(m1).toUpperCase();
   const m2 = findParam(igd, 'MACAddress');
