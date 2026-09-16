@@ -2176,22 +2176,10 @@
       selectedDevice = allDevices.find(d => d.id === id) || null;
       try {
         const fresh = await apiRequest('/devices/' + encodeURIComponent(id));
-        if (fresh && fresh.device) {
-          const d = fresh.device;
-          const igd = d.InternetGatewayDevice || d.Device || {};
-          const lastInform = d._lastInform ? new Date(d._lastInform) : null;
-          selectedDevice = {
-            id: d._id,
-            serialNumber: (d._deviceId && d._deviceId._SerialNumber) || d._id,
-            manufacturer: (d._deviceId && d._deviceId._Manufacturer) || 'Unknown',
-            productClass: (d._deviceId && d._deviceId._ProductClass) || 'ONT',
-            hardwareVersion: '-', softwareVersion: '-',
-            lastInform: lastInform ? lastInform.toISOString() : null,
-            isOnline: lastInform && (Date.now() - lastInform.getTime() <= 10 * 60 * 1000),
-            wanIp: null, pppoeUser: null, rxPower: null, txPower: null,
-            tags: d._tags || [], wifiReadback: []
-          };
-        }
+        // The server returns the same summary shape as the device list
+        // (optical power, WAN/PPPoE, Wi-Fi readback) — the modal renders
+        // from that, so its values can never disagree with the table.
+        if (fresh && fresh.summary) selectedDevice = fresh.summary;
       } catch (e) { /* fall back to list snapshot */ }
       if (!selectedDevice) { showToast('Device not found — it may have been deleted.', 'warning'); return; }
       populateDeviceDetail(selectedDevice);
@@ -2377,26 +2365,13 @@
       showToast('Triggering refresh for fresh Wi-Fi data...', 'info');
       try {
         await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id) + '/refresh', 'POST');
-        // Re-fetch device detail to pick up new readback
+        // Re-fetch device detail to pick up new readback. The server
+        // returns the shared summary shape (all password locations,
+        // masked-value filtering) — never parse the raw tree here.
         const fresh = await apiRequest('/devices/' + encodeURIComponent(selectedDevice.id));
-        if (fresh && fresh.device) {
-          const igd = fresh.device.InternetGatewayDevice || fresh.device.Device;
-          const wifiReadback = [];
-          const wlanBase = igd && igd.LANDevice && igd.LANDevice['1'] && igd.LANDevice['1'].WLANConfiguration;
-          if (wlanBase) {
-            for (const k of Object.keys(wlanBase)) {
-              if (k.startsWith('_')) continue;
-              const w = wlanBase[k];
-              wifiReadback.push({
-                radio: k,
-                ssid: w.SSID && w.SSID._value,
-                password: w.PreSharedKey && w.PreSharedKey['1'] && w.PreSharedKey['1'].KeyPassphrase && w.PreSharedKey['1'].KeyPassphrase._value,
-                enabled: w.Enable && w.Enable._value,
-                channel: w.Channel && w.Channel._value
-              });
-            }
-          }
-          selectedDevice.wifiReadback = wifiReadback;
+        if (fresh && fresh.summary) {
+          selectedDevice.wifiReadback = fresh.summary.wifiReadback || [];
+          const wifiReadback = selectedDevice.wifiReadback;
           // also pre-fill input fields with current values
           const w24 = wifiReadback.find(w => w.radio === '1');
           const w5 = wifiReadback.find(w => w.radio === '2');

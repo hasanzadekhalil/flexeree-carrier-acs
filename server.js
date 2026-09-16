@@ -256,7 +256,9 @@ function findAllParamsEndingWith(root, suffix) {
       if (k.startsWith('_')) continue;
       const v = o[k];
       const path = prefix ? prefix + '.' + k : k;
-      if (path.endsWith(suffix) && v && v._value !== undefined) {
+      // Case-insensitive: vendors mix RxPower / RXPower / RxOpticalPower,
+      // and an exact-case endsWith silently missed whole models.
+      if (path.toLowerCase().endsWith(String(suffix).toLowerCase()) && v && v._value !== undefined) {
         out.push({ path, value: v._value });
       } else if (v && typeof v === 'object') {
         walk(v, path);
@@ -265,6 +267,74 @@ function findAllParamsEndingWith(root, suffix) {
   }
   walk(root, '');
   return out;
+}
+
+// One portal-wide summary shape for a raw GenieACS device doc. Used by the
+// list, the CSV/XLSX export and the detail modal — so optical power,
+// WAN/PPPoE and Wi-Fi readback can never disagree between views.
+function firstNonEmpty(...vals) {
+  for (const v of vals) {
+    if (v === undefined || v === null) continue;
+    if (typeof v === 'string' && v.trim() === '') continue;
+    return v;
+  }
+  return null;
+}
+// Some ONTs report masked passwords (literal '******') instead of the real
+// key. Treat those as unknown, not as a configured password.
+function cleanPassword(v) {
+  if (v === undefined || v === null) return null;
+  const s = String(v);
+  if (s.trim() === '' || /^\*+$/.test(s.trim())) return null;
+  return s;
+}
+function summarizeDevice(d, now) {
+  const lastInform = d._lastInform ? new Date(d._lastInform) : null;
+  const isOnline = !!(lastInform && (now - lastInform.getTime() <= ONLINE_THRESHOLD_MS));
+  const igd = d.InternetGatewayDevice || d.Device;
+
+  // Wi-Fi readback (TR-098 paths). Password location is model-specific:
+  // flat KeyPassphrase (most), vendor X_TP_PreSharedKey (TP-Link Archer),
+  // nested PreSharedKey.1.KeyPassphrase (Syrotech).
+  const wifiReadback = [];
+  const wlanBase = igd && igd.LANDevice && igd.LANDevice['1'] && igd.LANDevice['1'].WLANConfiguration;
+  if (wlanBase) {
+    for (const k of Object.keys(wlanBase)) {
+      if (k.startsWith('_')) continue;
+      const w = wlanBase[k];
+      wifiReadback.push({
+        radio: k,
+        ssid: w.SSID && w.SSID._value,
+        password: cleanPassword(firstNonEmpty(
+          w.KeyPassphrase && (w.KeyPassphrase._value !== undefined ? w.KeyPassphrase._value : w.KeyPassphrase),
+          w.X_TP_PreSharedKey && (w.X_TP_PreSharedKey._value !== undefined ? w.X_TP_PreSharedKey._value : w.X_TP_PreSharedKey),
+          w.PreSharedKey && w.PreSharedKey['1'] && w.PreSharedKey['1'].KeyPassphrase && w.PreSharedKey['1'].KeyPassphrase._value
+        )),
+        enabled: w.Enable && w.Enable._value,
+        channel: w.Channel && w.Channel._value
+      });
+    }
+  }
+
+  return {
+    id: d._id,
+    serialNumber: (d._deviceId && d._deviceId._SerialNumber) || d._id,
+    manufacturer: (d._deviceId && d._deviceId._Manufacturer) || 'Unknown',
+    productClass: (d._deviceId && d._deviceId._ProductClass) || 'ONT',
+    hardwareVersion: (igd && igd.DeviceInfo && igd.DeviceInfo.HardwareVersion && igd.DeviceInfo.HardwareVersion._value) || '-',
+    softwareVersion: (igd && igd.DeviceInfo && igd.DeviceInfo.SoftwareVersion && igd.DeviceInfo.SoftwareVersion._value) || '-',
+    lastInform: lastInform ? lastInform.toISOString() : null,
+    isOnline,
+    wanIp: findParam(igd, 'ExternalIPAddress'),
+    // Search WAN subtree FIRST: a global 'Username' search matches
+    // ManagementServer.ConnectionRequestUsername ('admin') before the
+    // real PPPoE user (proven live on Archer C6, 2026-09-15).
+    pppoeUser: (igd && igd.WANDevice && findParam(igd.WANDevice, 'Username')) || findParam(igd, 'Username'),
+    rxPower: findParam(igd, 'RxOpticalPower') || findParam(igd, 'RXPower'),
+    txPower: findParam(igd, 'TxOpticalPower') || findParam(igd, 'TXPower'),
+    tags: d._tags || [],
+    wifiReadback
+  };
 }
 
 app.get('/api/devices', authenticate, async (req, res) => {
@@ -300,51 +370,9 @@ app.get('/api/devices', authenticate, async (req, res) => {
       .skip(skip).limit(ps).toArray();
 
     const now = Date.now();
-    const devices = rawDevices.map(d => {
-      const lastInform = d._lastInform ? new Date(d._lastInform) : null;
-      const isOnline = lastInform && (now - lastInform.getTime() <= ONLINE_THRESHOLD_MS);
-      const igd = d.InternetGatewayDevice || d.Device;
-
-      // Wi-Fi readback (TR-098 paths)
-      const wifiReadback = [];
-      const wlanBase = igd && igd.LANDevice && igd.LANDevice['1'] && igd.LANDevice['1'].WLANConfiguration;
-      if (wlanBase) {
-        for (const k of Object.keys(wlanBase)) {
-          if (k.startsWith('_')) continue;
-          const w = wlanBase[k];
-          wifiReadback.push({
-            radio: k,
-            ssid: w.SSID && w.SSID._value,
-            // Flat KeyPassphrase works on both models; nested
-            // PreSharedKey.1.KeyPassphrase exists only on Syrotech.
-            password: (w.KeyPassphrase && (w.KeyPassphrase._value !== undefined ? w.KeyPassphrase._value : w.KeyPassphrase)) ||
-              (w.PreSharedKey && w.PreSharedKey['1'] && w.PreSharedKey['1'].KeyPassphrase && w.PreSharedKey['1'].KeyPassphrase._value),
-            enabled: w.Enable && w.Enable._value,
-            channel: w.Channel && w.Channel._value
-          });
-        }
-      }
-
-      return {
-        id: d._id,
-        serialNumber: (d._deviceId && d._deviceId._SerialNumber) || d._id,
-        manufacturer: (d._deviceId && d._deviceId._Manufacturer) || 'Unknown',
-        productClass: (d._deviceId && d._deviceId._ProductClass) || 'ONT',
-        hardwareVersion: (igd && igd.DeviceInfo && igd.DeviceInfo.HardwareVersion && igd.DeviceInfo.HardwareVersion._value) || '-',
-        softwareVersion: (igd && igd.DeviceInfo && igd.DeviceInfo.SoftwareVersion && igd.DeviceInfo.SoftwareVersion._value) || '-',
-        lastInform: lastInform ? lastInform.toISOString() : null,
-        isOnline,
-        wanIp: findParam(igd, 'ExternalIPAddress'),
-        // Search WAN subtree FIRST: a global 'Username' search matches
-        // ManagementServer.ConnectionRequestUsername ('admin') before the
-        // real PPPoE user (proven live on Archer C6, 2026-09-15).
-        pppoeUser: (igd && igd.WANDevice && findParam(igd.WANDevice, 'Username')) || findParam(igd, 'Username'),
-        rxPower: findParam(igd, 'RxOpticalPower') || findParam(igd, 'RXPower'),
-        txPower: findParam(igd, 'TxOpticalPower') || findParam(igd, 'TXPower'),
-        tags: d._tags || [],
-        wifiReadback
-      };
-    });
+    // Single shared summary shape (optical, WAN/PPPoE, Wi-Fi) — the list,
+    // export and detail modal all render from this, so they cannot disagree.
+    const devices = rawDevices.map(d => summarizeDevice(d, now));
 
     res.json({ total, page: pg, pageSize: ps, devices });
   } catch (err) {
@@ -357,18 +385,19 @@ app.get('/api/devices/export', authenticate, async (req, res) => {
     if (!db) return res.status(503).json({ error: 'Database initializing...' });
     const fmt = (req.query.fmt || 'csv').toLowerCase();
     const rawDevices = await db.collection('devices').find({}).toArray();
+    const now = Date.now();
     const rows = rawDevices.map(d => {
-      const igd = d.InternetGatewayDevice || d.Device;
+      const s = summarizeDevice(d, now);
       return {
-        Serial: (d._deviceId && d._deviceId._SerialNumber) || d._id,
-        Manufacturer: (d._deviceId && d._deviceId._Manufacturer) || '',
-        Model: (d._deviceId && d._deviceId._ProductClass) || '',
-        LastInform: d._lastInform ? new Date(d._lastInform).toISOString() : '',
-        WAN_IP: findParam(igd, 'ExternalIPAddress') || '',
-        PPPoE: findParam(igd, 'Username') || '',
-        RX_dBm: findParam(igd, 'RxOpticalPower') || '',
-        TX_dBm: findParam(igd, 'TxOpticalPower') || '',
-        Tags: (d._tags || []).join('|')
+        Serial: s.serialNumber,
+        Manufacturer: s.manufacturer,
+        Model: s.productClass,
+        LastInform: s.lastInform || '',
+        WAN_IP: s.wanIp || '',
+        PPPoE: s.pppoeUser || '',
+        RX_dBm: (s.rxPower === null || s.rxPower === undefined) ? '' : s.rxPower,
+        TX_dBm: (s.txPower === null || s.txPower === undefined) ? '' : s.txPower,
+        Tags: (s.tags || []).join('|')
       };
     });
     const headers = ['Serial','Manufacturer','Model','LastInform','WAN_IP','PPPoE','RX_dBm','TX_dBm','Tags'];
@@ -393,7 +422,9 @@ app.get('/api/devices/:id', authenticate, async (req, res) => {
     if (!realId) return res.status(404).json({ error: 'Device not found' });
     const d = await db.collection('devices').findOne({ _id: realId });
     if (!d) return res.status(404).json({ error: 'Device not found' });
-    res.json({ device: d });
+    // Raw tree (for refresh logic) plus the same summary shape the list
+    // uses — the modal must render identical optical/WAN/Wi-Fi values.
+    res.json({ device: d, summary: summarizeDevice(d, Date.now()) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
