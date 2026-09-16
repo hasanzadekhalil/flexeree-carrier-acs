@@ -1,6 +1,7 @@
 # Flexeree Carrier ACS — NOC Command Center
 
 Enterprise & Carrier-Grade TR-069 Auto Configuration Server (ACS) and ISP Management Dashboard engineered for managing 1,000+ Syrotech GPON ONTs and multi-vendor CPE units.
+<img width="1919" height="913" alt="image" src="https://github.com/user-attachments/assets/f24e4e64-daad-4db3-be16-158aea140ff1" />
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![TR-069](https://img.shields.io/badge/TR--069-CWMP%20v1.4-00d2ff.svg)
