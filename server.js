@@ -69,15 +69,19 @@ async function logAudit(user, action, target, details, status = 'SUCCESS') {
 
 async function getDeviceTasksUrl(devId, immediate = true) {
   if (!db) return '/devices/' + encodeURIComponent(devId) + '/tasks' + (immediate ? '?connection_request' : '');
+  // Resolve display/serial/encoded ids to the real GenieACS _id. GenieACS
+  // _ids look like OUI-ProductClass-Serial with '-' percent-encoded as %2D.
   let doc = await db.collection('devices').findOne({ _id: devId });
   if (!doc) {
-    const parts = devId.split('-');
+    const decoded = (() => { try { return decodeURIComponent(devId); } catch { return devId; } })();
+    const encoded = encodeURIComponent(decoded).replace(/\(/g, '%28').replace(/\)/g, '%29');
+    const parts = decoded.split('-');
     const serial = parts[parts.length - 1];
+    const candidates = [...new Set([decoded, encoded, serial])];
     doc = await db.collection('devices').findOne({
       $or: [
-        { '_deviceId._SerialNumber': serial },
-        { '_deviceId._SerialNumber': devId },
-        { _id: devId.replace(/-/g, '%2D') }
+        ...candidates.map(c => ({ _id: c })),
+        ...candidates.map(c => ({ '_deviceId._SerialNumber': c }))
       ]
     });
   }
@@ -109,6 +113,7 @@ function nbiRequest(method, urlPath, body = null, base = NBI_BASE) {
       });
     });
     req.on('error', reject);
+    req.setTimeout(15000, () => req.destroy(new Error('NBI request timed out')));
     if (body) req.write(JSON.stringify(body));
     req.end();
   });
@@ -235,12 +240,13 @@ app.get('/api/dashboard/stats', authenticate, async (req, res) => {
 });
 
 // ---------- DEVICES ----------
+// Deep search: device trees nest params 4-6 levels deep (e.g.
+// WANDevice.1.X_CT-COM_EponInterfaceConfig.RXPower), so a top-level
+// scan always missed RX/TX/PPPoE/WAN_IP. Walk the whole tree.
 function findParam(obj, suffix) {
   if (!obj) return null;
-  for (const k of Object.keys(obj)) {
-    if (k.endsWith(suffix) && obj[k]) return obj[k]._value;
-  }
-  return null;
+  const all = findAllParamsEndingWith(obj, suffix);
+  return all.length ? all[0].value : null;
 }
 function findAllParamsEndingWith(root, suffix) {
   const out = [];
@@ -278,6 +284,11 @@ app.get('/api/devices', authenticate, async (req, res) => {
     }
     if (tag) filter['_tags'] = tag;
     if (model) filter['_deviceId._ProductClass'] = model;
+    // Online filter BEFORE pagination so total + page agree. Accepts both
+    // 'true'/'false' and the 'online'/'offline' values the UI sends.
+    const onlineCutoff = new Date(Date.now() - ONLINE_THRESHOLD_MS);
+    if (online === 'true' || online === 'online') filter['_lastInform'] = { $gte: onlineCutoff };
+    else if (online === 'false' || online === 'offline') filter['$or'] = (filter['$or'] || []).concat([{ _lastInform: { $lt: onlineCutoff } }, { _lastInform: { $exists: false } }]);
 
     const total = await db.collection('devices').countDocuments(filter);
     const pg = Math.max(1, parseInt(page));
@@ -304,7 +315,10 @@ app.get('/api/devices', authenticate, async (req, res) => {
           wifiReadback.push({
             radio: k,
             ssid: w.SSID && w.SSID._value,
-            password: w.PreSharedKey && w.PreSharedKey['1'] && w.PreSharedKey['1'].KeyPassphrase && w.PreSharedKey['1'].KeyPassphrase._value,
+            // Flat KeyPassphrase works on both models; nested
+            // PreSharedKey.1.KeyPassphrase exists only on Syrotech.
+            password: (w.KeyPassphrase && (w.KeyPassphrase._value !== undefined ? w.KeyPassphrase._value : w.KeyPassphrase)) ||
+              (w.PreSharedKey && w.PreSharedKey['1'] && w.PreSharedKey['1'].KeyPassphrase && w.PreSharedKey['1'].KeyPassphrase._value),
             enabled: w.Enable && w.Enable._value,
             channel: w.Channel && w.Channel._value
           });
@@ -321,7 +335,10 @@ app.get('/api/devices', authenticate, async (req, res) => {
         lastInform: lastInform ? lastInform.toISOString() : null,
         isOnline,
         wanIp: findParam(igd, 'ExternalIPAddress'),
-        pppoeUser: findParam(igd, 'Username'),
+        // Search WAN subtree FIRST: a global 'Username' search matches
+        // ManagementServer.ConnectionRequestUsername ('admin') before the
+        // real PPPoE user (proven live on Archer C6, 2026-09-15).
+        pppoeUser: (igd && igd.WANDevice && findParam(igd.WANDevice, 'Username')) || findParam(igd, 'Username'),
         rxPower: findParam(igd, 'RxOpticalPower') || findParam(igd, 'RXPower'),
         txPower: findParam(igd, 'TxOpticalPower') || findParam(igd, 'TXPower'),
         tags: d._tags || [],
@@ -329,11 +346,7 @@ app.get('/api/devices', authenticate, async (req, res) => {
       };
     });
 
-    let filtered = devices;
-    if (online === 'true') filtered = filtered.filter(d => d.isOnline);
-    else if (online === 'false') filtered = filtered.filter(d => !d.isOnline);
-
-    res.json({ total, page: pg, pageSize: ps, devices: filtered });
+    res.json({ total, page: pg, pageSize: ps, devices });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -376,7 +389,9 @@ app.get('/api/devices/export', authenticate, async (req, res) => {
 app.get('/api/devices/:id', authenticate, async (req, res) => {
   try {
     if (!db) return res.status(503).json({ error: 'Database initializing...' });
-    const d = await db.collection('devices').findOne({ _id: req.params.id });
+    const realId = await resolveDeviceId(req.params.id);
+    if (!realId) return res.status(404).json({ error: 'Device not found' });
+    const d = await db.collection('devices').findOne({ _id: realId });
     if (!d) return res.status(404).json({ error: 'Device not found' });
     res.json({ device: d });
   } catch (err) {
@@ -384,25 +399,40 @@ app.get('/api/devices/:id', authenticate, async (req, res) => {
   }
 });
 
-app.post('/api/devices/:id/tags', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
+// Every task route shares this wrapper: 503 when Mongo is down, 502 when the
+// NBI call fails — never a hung request or unhandled rejection.
+function taskRoute(handler) {
+  return async (req, res) => {
+    try {
+      if (!db) return res.status(503).json({ error: 'Database initializing...' });
+      await handler(req, res);
+    } catch (e) {
+      const msg = /timed out|ECONNREFUSED|ENOTFOUND/.test(e.message)
+        ? 'GenieACS NBI unreachable: ' + e.message : e.message;
+      res.status(502).json({ error: msg });
+    }
+  };
+}
+
+app.post('/api/devices/:id/tags', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const { tag, action } = req.body;
   const devId = req.params.id;
   const update = action === 'remove' ? { $pull: { _tags: tag } } : { $addToSet: { _tags: tag } };
   await db.collection('devices').updateOne({ _id: devId }, update);
   logAudit(req.user, 'TAG_UPDATE', devId, `${action === 'remove' ? 'Removed' : 'Added'} tag: ${tag}`);
   res.json({ success: true });
-});
+}));
 
-app.post('/api/devices/:id/refresh', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
+app.post('/api/devices/:id/refresh', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const devId = req.params.id;
   const task = { name: 'refreshObject', objectName: '' };
   const taskUrl = await getDeviceTasksUrl(devId);
   const resp = await nbiRequest('POST', taskUrl, task);
   logAudit(req.user, 'REFRESH_DEVICE', devId, 'Triggered full object refresh');
   res.json(resp);
-});
+}));
 
-app.post('/api/devices/:id/parameters', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
+app.post('/api/devices/:id/parameters', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const devId = req.params.id;
   const { parameterValues } = req.body;
   const task = { name: 'setParameterValues', parameterValues };
@@ -410,27 +440,27 @@ app.post('/api/devices/:id/parameters', authenticate, requireRoles('Super Admin'
   const resp = await nbiRequest('POST', taskUrl, task);
   logAudit(req.user, 'SET_PARAMETERS', devId, JSON.stringify(parameterValues));
   res.json(resp);
-});
+}));
 
-app.post('/api/devices/:id/reboot', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
+app.post('/api/devices/:id/reboot', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const devId = req.params.id;
   const task = { name: 'reboot' };
   const taskUrl = await getDeviceTasksUrl(devId);
   const resp = await nbiRequest('POST', taskUrl, task);
   logAudit(req.user, 'REBOOT', devId, 'Remote ONT reboot executed');
   res.json(resp);
-});
+}));
 
-app.post('/api/devices/:id/factory-reset', authenticate, requireRoles('Super Admin', 'Admin'), async (req, res) => {
+app.post('/api/devices/:id/factory-reset', authenticate, requireRoles('Super Admin', 'Admin'), taskRoute(async (req, res) => {
   const devId = req.params.id;
   const task = { name: 'factoryReset' };
   const taskUrl = await getDeviceTasksUrl(devId);
   const resp = await nbiRequest('POST', taskUrl, task);
   logAudit(req.user, 'FACTORY_RESET', devId, 'Remote Factory Reset executed');
   res.json(resp);
-});
+}));
 
-app.post('/api/devices/:id/firmware-upgrade', authenticate, requireRoles('Super Admin', 'Admin'), async (req, res) => {
+app.post('/api/devices/:id/firmware-upgrade', authenticate, requireRoles('Super Admin', 'Admin'), taskRoute(async (req, res) => {
   const devId = req.params.id;
   const { fileName } = req.body;
   if (!fileName) return res.status(400).json({ error: 'fileName required' });
@@ -439,7 +469,7 @@ app.post('/api/devices/:id/firmware-upgrade', authenticate, requireRoles('Super 
   const resp = await nbiRequest('POST', taskUrl, task);
   logAudit(req.user, 'FIRMWARE_UPGRADE', devId, `Firmware file: ${fileName}`);
   res.json(resp);
-});
+}));
 
 // ---------- BULK (incl. by tag) ----------
 app.post('/api/devices/bulk-action', authenticate, requireRoles('Super Admin', 'Admin'), async (req, res) => {
@@ -469,6 +499,7 @@ app.post('/api/devices/bulk-action', authenticate, requireRoles('Super Admin', '
       if (action === 'reboot') task = { name: 'reboot' };
       else if (action === 'refresh') task = { name: 'refreshObject', objectName: '' };
       else if (action === 'setParams') task = { name: 'setParameterValues', parameterValues: payload };
+      else return res.status(400).json({ error: 'Unknown bulk action: ' + action });
 
       if (task) {
         const taskUrl = await getDeviceTasksUrl(id, false);
@@ -483,8 +514,73 @@ app.post('/api/devices/bulk-action', authenticate, requireRoles('Super Admin', '
   }
 });
 
+// Resolve a display/serial/encoded id to the real GenieACS _id for Mongo ops.
+// Returns the doc's _id, or null when nothing matches.
+async function resolveDeviceId(devId) {
+  let doc = await db.collection('devices').findOne({ _id: devId });
+  if (doc) return doc._id;
+  const decoded = (() => { try { return decodeURIComponent(devId); } catch { return devId; } })();
+  const encoded = encodeURIComponent(decoded).replace(/\(/g, '%28').replace(/\)/g, '%29');
+  const parts = decoded.split('-');
+  const serial = parts[parts.length - 1];
+  const candidates = [...new Set([decoded, encoded, serial])];
+  doc = await db.collection('devices').findOne({
+    $or: [
+      ...candidates.map(c => ({ _id: c })),
+      ...candidates.map(c => ({ '_deviceId._SerialNumber': c }))
+    ]
+  });
+  return doc ? doc._id : null;
+}
+
+// ---------- DELETE devices (single + bulk) ----------
+app.delete('/api/devices/:id', authenticate, requireRoles('Super Admin', 'Admin'), async (req, res) => {
+  try {
+    if (!db) return res.status(503).json({ error: 'Database initializing...' });
+    const realId = await resolveDeviceId(req.params.id);
+    if (!realId) return res.status(404).json({ error: 'Device not found' });
+    const resp = await nbiRequest('DELETE', '/devices/' + encodeURIComponent(realId));
+    // Delete local Mongo copy only when NBI confirms (else the ONT
+    // reappears on next Inform and the operator thinks delete is broken).
+    if (resp.status >= 200 && resp.status < 300) {
+      await db.collection('devices').deleteOne({ _id: realId });
+    }
+    logAudit(req.user, 'DELETE_DEVICE', realId, `Device removed from ACS inventory (NBI status ${resp.status})`);
+    res.json({ success: resp.status >= 200 && resp.status < 300, nbiStatus: resp.status });
+  } catch (e) {
+    res.status(502).json({ error: 'GenieACS NBI unreachable: ' + e.message });
+  }
+});
+
+app.delete('/api/devices', authenticate, requireRoles('Super Admin', 'Admin'), async (req, res) => {
+  try {
+    if (!db) return res.status(503).json({ error: 'Database initializing...' });
+    const { deviceIds } = req.body || {};
+    if (!deviceIds || !deviceIds.length) return res.status(400).json({ error: 'No devices selected' });
+    const results = [];
+    for (const id of deviceIds) {
+      try {
+        const realId = await resolveDeviceId(id);
+        if (!realId) { results.push({ id, status: 404 }); continue; }
+        const resp = await nbiRequest('DELETE', '/devices/' + encodeURIComponent(realId));
+        if (resp.status >= 200 && resp.status < 300) {
+          await db.collection('devices').deleteOne({ _id: realId });
+        }
+        results.push({ id, status: resp.status });
+      } catch (err) {
+        results.push({ id, status: 'error', error: err.message });
+      }
+    }
+    const ok = results.filter(r => r.status === 200 || r.status === 202 || r.status === 204).length;
+    logAudit(req.user, 'BULK_DELETE_DEVICES', `${deviceIds.length} devices`, `Deleted ${ok}/${deviceIds.length} from ACS inventory`);
+    res.json({ success: true, deleted: ok, total: deviceIds.length, results });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ---------- WAN / WiFi / Diagnostics ----------
-app.post('/api/devices/:id/wan-config', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
+app.post('/api/devices/:id/wan-config', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const devId = req.params.id;
   const { connectionType, username, password, vlanId, priority, dns1, dns2 } = req.body;
   const paramValues = [];
@@ -504,25 +600,34 @@ app.post('/api/devices/:id/wan-config', authenticate, requireRoles('Super Admin'
   const resp = await nbiRequest('POST', taskUrl, task);
   logAudit(req.user, 'WAN_CONFIG', devId, `Configured ${connectionType} WAN, VLAN: ${vlanId}`);
   res.json(resp);
-});
+}));
 
-app.post('/api/devices/:id/wifi-config', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
+app.post('/api/devices/:id/wifi-config', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const devId = req.params.id;
   const { radio, ssid, password, enabled, channel } = req.body;
   const base = `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${radio || '1'}`;
+  // Model-aware password path (proven live 2026-09-15): TP-Link Archer C6
+  // rejects KeyPassphrase with 9007 (whole task incl. SSID is lost), its
+  // writable key is the vendor param X_TP_PreSharedKey. Syrotech ONTs use
+  // the standard KeyPassphrase.
+  const realId = await resolveDeviceId(devId);
+  const doc = realId ? await db.collection('devices').findOne({ _id: realId }) : null;
+  const pc = (doc && doc._deviceId && (doc._deviceId._ProductClass + ' ' + doc._deviceId._Manufacturer)) || '';
+  const isTplink = /TP-Link|Archer/i.test(pc);
+  const passPath = isTplink ? `${base}.X_TP_PreSharedKey` : `${base}.KeyPassphrase`;
   const paramValues = [];
   if (ssid) paramValues.push([`${base}.SSID`, ssid, 'xsd:string']);
-  if (password) paramValues.push([`${base}.PreSharedKey.1.KeyPassphrase`, password, 'xsd:string']);
+  if (password) paramValues.push([passPath, password, 'xsd:string']);
   if (enabled !== undefined) paramValues.push([`${base}.Enable`, Boolean(enabled), 'xsd:boolean']);
   if (channel) paramValues.push([`${base}.Channel`, parseInt(channel), 'xsd:unsignedInt']);
   const task = { name: 'setParameterValues', parameterValues: paramValues };
   const taskUrl = await getDeviceTasksUrl(devId);
   const resp = await nbiRequest('POST', taskUrl, task);
-  logAudit(req.user, 'WIFI_CONFIG', devId, `Radio ${radio}: SSID=${ssid}`);
+  logAudit(req.user, 'WIFI_CONFIG', devId, `Radio ${radio}: SSID=${ssid} (${isTplink ? 'TP-Link key' : 'standard key'})`);
   res.json(resp);
-});
+}));
 
-app.post('/api/devices/:id/diagnostics', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), async (req, res) => {
+app.post('/api/devices/:id/diagnostics', authenticate, requireRoles('Super Admin', 'Admin', 'Technician'), taskRoute(async (req, res) => {
   const devId = req.params.id;
   const { type, host } = req.body;
   const objName = type === 'TraceRoute'
@@ -537,7 +642,7 @@ app.post('/api/devices/:id/diagnostics', authenticate, requireRoles('Super Admin
   const resp = await nbiRequest('POST', taskUrl, task);
   logAudit(req.user, 'DIAGNOSTICS', devId, `Requested ${type} to ${host}`);
   res.json(resp);
-});
+}));
 
 // ---------- PRESETS ----------
 app.get('/api/presets', authenticate, async (req, res) => {

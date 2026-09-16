@@ -1051,7 +1051,7 @@
         <button onclick="navigate('audit')" id="nav-audit" class="nav-item">
           <i class="ph-bold ph-scroll"></i> Audit Logs
         </button>
-        <button onclick="navigate('users')" id="nav-users" class="nav-item">
+        <button onclick="navigate('users')" data-requires-admin id="nav-users" class="nav-item">
           <i class="ph-bold ph-users-three"></i> Staff & RBAC
         </button>
         <button onclick="navigate('onboarding')" id="nav-onboarding" class="nav-item">
@@ -1180,8 +1180,11 @@
             <div style="font-size: 11px; color: var(--text-muted);">Syrotech GPON + Multi-vendor fleet · <span id="devicesCountLabel">— devices</span></div>
           </div>
           <div class="bulk-row">
-            <button onclick="openBulkRebootModal()" class="btn btn-warning btn-sm">
+            <button onclick="openBulkRebootModal()" data-requires-admin class="btn btn-warning btn-sm">
               <i class="ph-bold ph-arrows-clockwise"></i> Bulk Reboot
+            </button>
+            <button onclick="deleteSelectedDevices()" data-requires-admin class="btn btn-danger btn-sm">
+              <i class="ph-bold ph-trash"></i> Delete Selected
             </button>
             <button onclick="exportDevices('csv')" class="btn btn-secondary btn-sm">
               <i class="ph-bold ph-file-csv"></i> Export CSV
@@ -1250,7 +1253,7 @@
             <div style="font-size: 15px; font-weight: 700;">Zero-Touch Provisioning (ZTP) Presets</div>
             <div style="font-size: 11px; color: var(--text-muted);">Automated configuration rules triggered on ONT bootstrap & boot events</div>
           </div>
-          <button onclick="openNewPresetModal()" class="btn btn-primary btn-sm">
+          <button onclick="openNewPresetModal()" data-requires-admin class="btn btn-primary btn-sm">
             <i class="ph-bold ph-plus"></i> New Preset
           </button>
         </div>
@@ -1585,7 +1588,7 @@
               <label class="form-label">Upload New Firmware (to GenieACS FS)</label>
               <div style="display: flex; gap: 8px;">
                 <input type="file" id="firmwareFileInput" accept=".img,.bin,.fw" class="form-control" style="flex: 1;">
-                <button onclick="uploadFirmware()" class="btn btn-secondary btn-sm" style="white-space: nowrap;">
+                <button onclick="uploadFirmware()" data-requires-admin class="btn btn-secondary btn-sm" style="white-space: nowrap;">
                   <i class="ph-bold ph-upload"></i> Upload
                 </button>
               </div>
@@ -1607,7 +1610,7 @@
                 <label class="form-label">Selected Firmware</label>
                 <input type="text" id="firmwareSelectedFile" class="form-control" placeholder="Select a file above or paste filename">
               </div>
-              <button onclick="pushFirmwareUpgrade()" class="btn btn-warning">
+              <button onclick="pushFirmwareUpgrade()" data-requires-admin class="btn btn-warning">
                 <i class="ph-bold ph-download"></i> Dispatch Firmware Upgrade to ONT
               </button>
               <div id="firmwarePushStatus" style="font-size: 11px; margin-top: 8px; color: var(--text-muted);"></div>
@@ -1635,7 +1638,7 @@
               <i class="ph-bold ph-skull" style="font-size: 24px; color: var(--rose-500);"></i>
               <div style="font-weight: 700; font-size: 13px; margin: 8px 0 4px 0;">Factory Reset</div>
               <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Wipe configuration to default</div>
-              <button onclick="deviceAction('factoryReset')" class="btn btn-danger btn-sm" style="width: 100%;">Factory Reset</button>
+              <button onclick="deviceAction('factoryReset')" data-requires-admin class="btn btn-danger btn-sm" style="width: 100%;">Factory Reset</button>
             </div>
           </div>
         </div>
@@ -1816,6 +1819,15 @@
     const devState = { page: 1, pageSize: 50, total: 0, lastData: null };
     const audState = { page: 1, pageSize: 100, total: 0, lastData: null };
     const usrState = { page: 1, pageSize: 50, total: 0, lastData: null };
+    let devicesAutoRefresh = null;
+
+    // Hide admin-only controls for Technician/Viewer (server 403 is backstop)
+    function applyRoleGating() {
+      const adminOnly = currentUser && (currentUser.role === 'Super Admin' || currentUser.role === 'Admin');
+      document.querySelectorAll('[data-requires-admin]').forEach(el => {
+        el.style.display = adminOnly ? '' : 'none';
+      });
+    }
 
     let availableTags = [];
     let availableModels = [];
@@ -1907,6 +1919,7 @@
       document.getElementById('userRoleBadge').innerText = currentUser.role;
       document.getElementById('userHeaderControls').classList.remove('hidden');
       document.getElementById('mainSidebar').classList.remove('hidden');
+      applyRoleGating();
     }
 
     function showLogin() {
@@ -2047,8 +2060,15 @@
         devState.total = data.total || 0;
         renderDevicesTable(allDevices);
         renderPagination('devicesPagination', 'devices', devState);
-        document.getElementById('devicesCountLabel').innerText = `${devState.total} devices · page ${devState.page}/${Math.max(1, Math.ceil(devState.total / devState.pageSize))}`;
+        document.getElementById('devicesCountLabel').innerText = `${devState.total} devices · page ${devState.page}/${Math.max(1, Math.ceil(devState.total / devState.pageSize))} · auto-refresh 30s`;
         populateDeviceFilters(data.devices);
+        if (!devicesAutoRefresh) {
+          devicesAutoRefresh = setInterval(() => {
+            if (document.getElementById('view-devices').classList.contains('hidden')) return;
+            if (!document.getElementById('deviceModal').classList.contains('hidden')) return;
+            loadDevices();
+          }, 30000);
+        }
       } catch (err) {
         showToast('Failed to load devices: ' + err.message, 'error');
       }
@@ -2077,6 +2097,8 @@
     }
 
     function onDeviceFilterChange() {
+      const ps = document.getElementById('devicePageSize');
+      if (ps) devState.pageSize = parseInt(ps.value) || 50;
       devState.page = 1;
       loadDevices();
     }
@@ -2122,7 +2144,10 @@
             <td style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">
               ${d.lastInform ? new Date(d.lastInform).toLocaleString() : 'Never'}
             </td>
-            <td style="text-align: right;">
+            <td style="text-align: right; white-space: nowrap;">
+              <button data-requires-admin onclick="deleteSingleDevice('${escapeAttr(d.id)}', '${escapeAttr(d.serialNumber)}')" class="btn btn-danger btn-sm" title="Delete device">
+                <i class="ph-bold ph-trash"></i>
+              </button>
               <button onclick="openDeviceDetail('${escapeAttr(d.id)}')" class="btn btn-secondary btn-sm">
                 Manage <i class="ph-bold ph-caret-right"></i>
               </button>
@@ -2148,8 +2173,27 @@
 
     // ============ DEVICE DETAIL ============
     async function openDeviceDetail(id) {
-      selectedDevice = allDevices.find(d => d.id === id);
-      if (!selectedDevice) return;
+      selectedDevice = allDevices.find(d => d.id === id) || null;
+      try {
+        const fresh = await apiRequest('/devices/' + encodeURIComponent(id));
+        if (fresh && fresh.device) {
+          const d = fresh.device;
+          const igd = d.InternetGatewayDevice || d.Device || {};
+          const lastInform = d._lastInform ? new Date(d._lastInform) : null;
+          selectedDevice = {
+            id: d._id,
+            serialNumber: (d._deviceId && d._deviceId._SerialNumber) || d._id,
+            manufacturer: (d._deviceId && d._deviceId._Manufacturer) || 'Unknown',
+            productClass: (d._deviceId && d._deviceId._ProductClass) || 'ONT',
+            hardwareVersion: '-', softwareVersion: '-',
+            lastInform: lastInform ? lastInform.toISOString() : null,
+            isOnline: lastInform && (Date.now() - lastInform.getTime() <= 10 * 60 * 1000),
+            wanIp: null, pppoeUser: null, rxPower: null, txPower: null,
+            tags: d._tags || [], wifiReadback: []
+          };
+        }
+      } catch (e) { /* fall back to list snapshot */ }
+      if (!selectedDevice) { showToast('Device not found — it may have been deleted.', 'warning'); return; }
       populateDeviceDetail(selectedDevice);
       switchTab('overview');
       document.getElementById('deviceModal').classList.remove('hidden');
@@ -2592,7 +2636,10 @@
       } catch (e) { showToast('Failed to load audit: ' + e.message, 'error'); }
     }
 
-    function onAuditFilterChange() { audState.page = 1; loadAudit(); }
+    function onAuditFilterChange() {
+      const ps = document.getElementById('auditPageSize');
+      if (ps) audState.pageSize = parseInt(ps.value) || 100;
+      audState.page = 1; loadAudit(); }
 
     function exportAudit(fmt) {
       downloadFile(apiDownloadUrl('/audit-logs/export', { fmt }), 'audit-log.' + (fmt === 'xlsx' ? 'xls' : 'csv'));
@@ -2640,7 +2687,10 @@
         document.getElementById('usersCountLabel').innerText = `${usrState.total} accounts · page ${usrState.page}/${Math.max(1, Math.ceil(usrState.total / usrState.pageSize))}`;
       } catch (e) { showToast('Failed to load users: ' + e.message, 'error'); }
     }
-    function onUsersFilterChange() { usrState.page = 1; loadUsers(); }
+    function onUsersFilterChange() {
+      const ps = document.getElementById('usersPageSize');
+      if (ps) usrState.pageSize = parseInt(ps.value) || 50;
+      usrState.page = 1; loadUsers(); }
 
     function openNewUserModal() { document.getElementById('addUserModal').classList.remove('hidden'); }
     function closeAddUserModal() { document.getElementById('addUserModal').classList.add('hidden'); }
@@ -2713,6 +2763,27 @@
         closeBulkRebootModal();
         loadDevices();
       } catch (e) { showToast('Bulk failed: ' + e.message, 'error'); }
+    }
+
+    // ============ DELETE DEVICES ============
+    async function deleteSelectedDevices() {
+      const ids = getSelectedDeviceIds();
+      if (!ids.length) { showToast('Select at least one device row to delete.', 'warning'); return; }
+      if (!confirm(`CRITICAL ACTION: Permanently delete ${ids.length} device(s) from the ACS inventory? The ONTs will re-register on their next Inform if still pointed at this ACS.`)) return;
+      try {
+        const result = await apiRequest('/devices', 'DELETE', { deviceIds: ids });
+        showToast(`Deleted ${result.deleted}/${result.total} devices.`, result.deleted === result.total ? 'success' : 'warning');
+        loadDevices();
+      } catch (e) { showToast('Delete failed: ' + e.message, 'error'); }
+    }
+
+    async function deleteSingleDevice(id, serial) {
+      if (!confirm(`Permanently delete device "${serial || id}" from the ACS inventory? It will re-register on its next Inform if still pointed at this ACS.`)) return;
+      try {
+        await apiRequest('/devices/' + encodeURIComponent(id), 'DELETE');
+        showToast('Device deleted.', 'success');
+        loadDevices();
+      } catch (e) { showToast('Delete failed: ' + e.message, 'error'); }
     }
 
     // ============ PAGINATION ============
